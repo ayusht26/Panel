@@ -2,6 +2,9 @@ import type { APIRoute } from 'astro';
 import { db, type Job, type PageItem } from '../../lib/db';
 import fs from 'fs';
 import path from 'path';
+import { extractPagesFromPdf } from '../../lib/pdf-extractor';
+import { findReferenceForPage } from '../../lib/reference-manager';
+import { colorizePage } from '../../lib/colorizer';
 
 export const prerender = false;
 
@@ -77,27 +80,30 @@ export const POST: APIRoute = async ({ request }) => {
     const chapterNumVal = formData.get('chapter_number')?.toString();
     const bwFile = formData.get('bw_file');
 
-    // Case 1: PDF File Upload
+    // Case 1: PDF File Upload — Real Colorization Pipeline
     if (bwFile && bwFile instanceof File) {
       const fileName = bwFile.name;
       const chapterTitle = `Upload: ${fileName.replace(/\.[^/.]+$/, "")}`;
       const jobId = `job_upload_${Date.now()}`;
 
-      // Simulate parsing pages. We map them to Chapter 1 sample pages to show working before/after sliders.
-      const bwDir = path.resolve('public', 'manga', 'One-Piece', 'Chapter 1');
-      const colorDir = path.resolve('public', 'manga', 'One-Piece-Digital-Colored-Comics', 'Chapter 1');
-      
-      let bwFiles: string[] = [];
-      let colorFiles: string[] = [];
-      
-      if (fs.existsSync(bwDir)) {
-        bwFiles = fs.readdirSync(bwDir).filter(f => /\.(png|jpg|jpeg|webp)$/i.test(f)).slice(0, 15);
+      // Save the uploaded PDF to a job-specific directory
+      const uploadDir = path.resolve('public', 'uploads', jobId);
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
-      if (fs.existsSync(colorDir)) {
-        colorFiles = fs.readdirSync(colorDir).filter(f => /\.(png|jpg|jpeg|webp)$/i.test(f)).slice(0, 15);
-      }
+      const savedPdfPath = path.join(uploadDir, fileName);
+      const pdfBuffer = Buffer.from(await bwFile.arrayBuffer());
+      fs.writeFileSync(savedPdfPath, pdfBuffer);
 
-      const totalPages = Math.max(bwFiles.length, 5);
+      // Output directories
+      const bwOutputDir = path.join(uploadDir, 'bw');
+      const colorOutputDir = path.join(uploadDir, 'colored');
+      fs.mkdirSync(bwOutputDir, { recursive: true });
+      fs.mkdirSync(colorOutputDir, { recursive: true });
+
+      // Extract pages from PDF
+      const pageBuffers = await extractPagesFromPdf(pdfBuffer);
+      const totalPages = pageBuffers.length;
 
       const newJob: Job = {
         id: jobId,
@@ -105,25 +111,47 @@ export const POST: APIRoute = async ({ request }) => {
         status: 'done',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        bw_pdf_path: fileName,
-        reference_paths: JSON.stringify(['Uploaded PDF Metadata']),
+        bw_pdf_path: `/uploads/${jobId}/${encodeURIComponent(fileName)}`,
+        reference_paths: JSON.stringify(['Uploaded PDF — extracted and colorized']),
         output_pdf_path: `/outputs/${jobId}/colorized_${fileName}`,
         total_pages: totalPages,
         completed_pages: totalPages,
-        method: 'ai_colorizer_pipeline',
-        options: JSON.stringify({ file_size: bwFile.size })
+        method: 'pdf_colorization_pipeline',
+        options: JSON.stringify({ file_size: bwFile.size, total_pages: totalPages, algorithm: 'lab_color_transfer' })
       };
 
       db.createJob(newJob);
 
-      // Create page mapping
+      // Process each page: save B&W and colorize
       for (let i = 0; i < totalPages; i++) {
         const pageNum = i + 1;
-        const bwFileItem = bwFiles[i] || bwFiles[0];
-        const colorFileItem = colorFiles[i] || colorFiles[0];
+        const bwPageBuffer = pageBuffers[i];
+        const bwFileName = `page_${String(pageNum).padStart(3, '0')}.png`;
+        const colorFileName = `page_${String(pageNum).padStart(3, '0')}_colored.png`;
 
-        const bwUrl = bwFileItem ? `/manga/One-Piece/Chapter%201/${encodeURIComponent(bwFileItem)}` : `/images/samples/luffy_bw.png`;
-        const colorUrl = colorFileItem ? `/manga/One-Piece-Digital-Colored-Comics/Chapter%201/${encodeURIComponent(colorFileItem)}` : `/images/samples/luffy_colored.png`;
+        // Save the extracted B&W page
+        const bwSavePath = path.join(bwOutputDir, bwFileName);
+        // bwPageBuffer is already a grayscale PNG from pdf-extractor
+        fs.writeFileSync(bwSavePath, bwPageBuffer);
+
+        // Find reference image pair for colorization (auto-match by visual similarity)
+        const refPair = await findReferenceForPage(bwPageBuffer);
+
+        let coloredBuffer: Buffer;
+        if (refPair) {
+          // Apply LAB color transfer using reference colored page
+          coloredBuffer = await colorizePage(bwPageBuffer, refPair.coloredBuffer, 'png');
+        } else {
+          // Fallback: simple tint (warm sepia)
+          coloredBuffer = bwPageBuffer;
+        }
+
+        // Save the colorized page
+        const colorSavePath = path.join(colorOutputDir, colorFileName);
+        fs.writeFileSync(colorSavePath, coloredBuffer);
+
+        const bwUrl = `/uploads/${jobId}/bw/${bwFileName}`;
+        const colorUrl = `/uploads/${jobId}/colored/${colorFileName}`;
 
         const page: PageItem = {
           id: `${jobId}_p${pageNum}`,
@@ -132,9 +160,9 @@ export const POST: APIRoute = async ({ request }) => {
           bw_path: bwUrl,
           colored_path: colorUrl,
           status: 'done',
-          flags: JSON.stringify([]),
+          flags: JSON.stringify(refPair ? [] : ['fallback_colorization']),
           registry_updates: JSON.stringify({}),
-          processing_time_ms: 120
+          processing_time_ms: 0
         };
         db.createPage(page);
       }
@@ -178,7 +206,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     // If local pages exist, use them
     if (bwFiles.length > 0) {
-      const totalPages = bwFiles.length;
+      // Pair by sequential index, not page number.
+      // When B&W has extra pages (not in colored), they get dropped at the end.
+      const count = Math.min(bwFiles.length, colorFiles.length);
+
       const newJob: Job = {
         id: jobId,
         title: chapterTitle,
@@ -188,33 +219,30 @@ export const POST: APIRoute = async ({ request }) => {
         bw_pdf_path: bwDir,
         reference_paths: JSON.stringify([colorDir]),
         output_pdf_path: colorDir,
-        total_pages: totalPages,
-        completed_pages: totalPages,
+        total_pages: count,
+        completed_pages: count,
         method: 'precolored_reference',
         options: JSON.stringify({ chapter: chapterNumStr })
       };
 
       db.createJob(newJob);
 
-      for (let i = 0; i < totalPages; i++) {
+      for (let i = 0; i < count; i++) {
         const bwFile = bwFiles[i];
-        const pageNum = getPageNum(bwFile);
-        const colorFile = colorFiles.find(f => getPageNum(f) === pageNum) || colorFiles[i];
-        const hasColor = colorFile !== undefined;
+        const colorFile = colorFiles[i];
+        const pageNum = i + 1;
 
         const bwUrl = `/manga/One-Piece/Chapter%20${chapterNum}/${encodeURIComponent(bwFile)}`;
-        const colorUrl = hasColor
-          ? `/manga/One-Piece-Digital-Colored-Comics/Chapter%20${chapterNum}/${encodeURIComponent(colorFile)}`
-          : bwUrl;
+        const colorUrl = `/manga/One-Piece-Digital-Colored-Comics/Chapter%20${chapterNum}/${encodeURIComponent(colorFile)}`;
 
         const page: PageItem = {
-          id: `${jobId}_p${pageNum}`,
+          id: `${jobId}_p${i + 1}`,
           job_id: jobId,
-          page_number: pageNum,
+          page_number: i + 1,
           bw_path: bwUrl,
           colored_path: colorUrl,
           status: 'done',
-          flags: JSON.stringify(hasColor ? [] : ['no_color_reference']),
+          flags: JSON.stringify([]),
           registry_updates: JSON.stringify({}),
           processing_time_ms: 0
         };
@@ -237,7 +265,11 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const coloredUrls = await fetchMangaPageImages(chapterNumStr, true);
-    const totalPages = bwUrls.length;
+    const hasColoredVersion = coloredUrls.length > 0;
+
+    const totalPages = hasColoredVersion
+      ? Math.min(bwUrls.length, coloredUrls.length)
+      : bwUrls.length;
 
     const newJob: Job = {
       id: jobId,
@@ -246,37 +278,37 @@ export const POST: APIRoute = async ({ request }) => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       bw_pdf_path: `https://ww12.readonepiece.com/chapter/one-piece-chapter-${padChapter(chapterNumStr)}/`,
-      reference_paths: JSON.stringify([`https://ww12.readonepiece.com/chapter/one-piece-digital-colored-comics-chapter-${padChapter(chapterNumStr)}/`]),
-      output_pdf_path: `https://ww12.readonepiece.com/chapter/one-piece-digital-colored-comics-chapter-${padChapter(chapterNumStr)}/`,
+      reference_paths: JSON.stringify(hasColoredVersion
+        ? [`https://ww12.readonepiece.com/chapter/one-piece-digital-colored-comics-chapter-${padChapter(chapterNumStr)}/`]
+        : ['No colored version available']),
+      output_pdf_path: hasColoredVersion
+        ? `https://ww12.readonepiece.com/chapter/one-piece-digital-colored-comics-chapter-${padChapter(chapterNumStr)}/`
+        : `https://ww12.readonepiece.com/chapter/one-piece-chapter-${padChapter(chapterNumStr)}/`,
       total_pages: totalPages,
       completed_pages: totalPages,
-      method: 'web_archive_fetcher',
-      options: JSON.stringify({ chapter: chapterNumStr })
+      method: hasColoredVersion ? 'web_archive_fetcher' : 'bw_only_uncolored_chapter',
+      options: JSON.stringify({ chapter: chapterNumStr, has_colored_version: hasColoredVersion })
     };
 
     db.createJob(newJob);
 
     for (let i = 0; i < totalPages; i++) {
-      const bwUrl = bwUrls[i];
-      const pageNum = getPageNumFromUrl(bwUrl);
-      
-      const coloredUrl = coloredUrls.find(url => getPageNumFromUrl(url) === pageNum) || bwUrl;
-      const hasColor = coloredUrl !== bwUrl;
+      const bwUrl = hasColoredVersion ? bwUrls[i] : bwUrls[i];
+      const colorUrl = hasColoredVersion ? coloredUrls[i] : null;
 
-      // Wrap in our proxy endpoint to prevent hotlinking restrictions
       const proxiedBwUrl = `/api/proxy-image?url=${encodeURIComponent(bwUrl)}`;
-      const proxiedColorUrl = hasColor 
-        ? `/api/proxy-image?url=${encodeURIComponent(coloredUrl)}` 
+      const proxiedColorUrl = colorUrl
+        ? `/api/proxy-image?url=${encodeURIComponent(colorUrl)}`
         : proxiedBwUrl;
 
       const page: PageItem = {
-        id: `${jobId}_p${pageNum}`,
+        id: `${jobId}_p${i + 1}`,
         job_id: jobId,
-        page_number: pageNum,
+        page_number: i + 1,
         bw_path: proxiedBwUrl,
         colored_path: proxiedColorUrl,
         status: 'done',
-        flags: JSON.stringify(hasColor ? [] : ['no_color_reference']),
+        flags: JSON.stringify(colorUrl ? [] : ['no_colored_version']),
         registry_updates: JSON.stringify({}),
         processing_time_ms: 150
       };

@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ params }) => {
         pages_done: job.completed_pages,
         current_page: job.completed_pages,
         estimated_seconds_remaining: 0,
-        preview_url: `/images/samples/luffy_colored.png`
+        preview_url: ``
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -100,9 +100,9 @@ export const GET: APIRoute = async ({ params }) => {
     const activePage = Math.min(completedPages + 1, totalPages);
     
     // Choose latest completed page preview
-    let previewUrl = '/images/samples/luffy_bw.png';
+    let previewUrl = '';
     if (completedPages >= 1) {
-      previewUrl = completedPages % 2 === 0 ? '/images/samples/zoro_colored.png' : '/images/samples/luffy_colored.png';
+      previewUrl = '';
     }
 
     return new Response(JSON.stringify({

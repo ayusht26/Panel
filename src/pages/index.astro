@@ -3,6 +3,137 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 ---
 
-<Layout title="ChromaManga — Premium Manga AI Colorizer Pipeline">
-	<Hero />
+<Layout title="StrawHat Studio — One Piece Colorization & Archive">
+  <Hero />
+
+  <!-- Features Section -->
+  <section id="features" class="relative bg-canvas border-t border-hairline py-24 md:py-32 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center space-y-3 mb-16 reveal">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-hairline bg-canvas-soft text-[10px] font-mono text-muted-readable uppercase shadow-vercel-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+          Platform Capabilities
+        </div>
+        <h2 class="text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-ink font-sans">Everything a Nakama needs.</h2>
+        <p class="text-text-secondary text-sm md:text-base max-w-xl mx-auto font-sans">Browse, download, and colorize — all in one place, completely free.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-canvas-soft border border-hairline rounded-xl p-8 space-y-5 shadow-vercel-sm card-hover reveal">
+          <div class="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase">Browse Archive</h3>
+          <p class="text-[13px] text-text-secondary font-sans leading-relaxed">
+            Access the complete Digital Colored Comics archive from chapter 1 to 1076. Every page in full color, ready to view or download.
+          </p>
+        </div>
+
+        <div class="bg-canvas-soft border border-hairline rounded-xl p-8 space-y-5 shadow-vercel-sm card-hover reveal reveal-d2">
+          <div class="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase">Download Chapters</h3>
+          <p class="text-[13px] text-text-secondary font-sans leading-relaxed">
+            Download any chapter in B&W or colored format. Perfect for offline reading, archival, or personal collections.
+          </p>
+        </div>
+
+        <div class="bg-canvas-soft border border-hairline rounded-xl p-8 space-y-5 shadow-vercel-sm card-hover reveal reveal-d3">
+          <div class="w-10 h-10 rounded-lg bg-ocean/10 border border-ocean/20 flex items-center justify-center">
+            <svg class="w-5 h-5 text-ocean" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase">Colorize Pages</h3>
+          <p class="text-[13px] text-text-secondary font-sans leading-relaxed">
+            Upload your own B&W manga pages and apply LAB color transfer using reference images from the official colored comics.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="relative bg-canvas-soft border-t border-hairline py-24 md:py-32 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center space-y-3 mb-16 reveal">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-hairline bg-canvas text-[10px] font-mono text-muted-readable uppercase shadow-vercel-sm">
+          Simple Workflow
+        </div>
+        <h2 class="text-3xl md:text-4xl font-semibold tracking-[-0.03em] text-ink font-sans">How it works.</h2>
+        <p class="text-text-secondary text-sm md:text-base max-w-xl mx-auto font-sans">Three steps to start reading or colorizing.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center reveal card-hover rounded-xl p-6">
+          <div class="w-14 h-14 rounded-full bg-ink text-canvas flex items-center justify-center mx-auto mb-5 shadow-vercel-md">
+            <span class="text-lg font-bold font-mono">1</span>
+          </div>
+          <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase mb-2">Pick a Chapter</h3>
+          <p class="text-xs text-text-secondary font-sans leading-relaxed max-w-xs mx-auto">Enter a One Piece chapter number or upload your own B&W manga PDF.</p>
+        </div>
+
+        <div class="text-center reveal reveal-d2 card-hover rounded-xl p-6">
+          <div class="w-14 h-14 rounded-full border-2 border-hairline-strong bg-canvas text-ink flex items-center justify-center mx-auto mb-5 shadow-vercel-sm">
+            <span class="text-lg font-bold font-mono">2</span>
+          </div>
+          <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase mb-2">Select Mode</h3>
+          <p class="text-xs text-text-secondary font-sans leading-relaxed max-w-xs mx-auto">Browse the colored archive, download B&W originals, or trigger the colorization pipeline.</p>
+        </div>
+
+        <div class="text-center reveal reveal-d3 card-hover rounded-xl p-6">
+          <div class="w-14 h-14 rounded-full border-2 border-accent/30 bg-accent/5 text-accent flex items-center justify-center mx-auto mb-5 shadow-vercel-sm">
+            <span class="text-lg font-bold font-mono">3</span>
+          </div>
+          <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase mb-2">View & Download</h3>
+          <p class="text-xs text-text-secondary font-sans leading-relaxed max-w-xs mx-auto">Compare pages side-by-side with the B&W/colored slider and download the full chapter.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="relative bg-ink text-on-primary border-t border-hairline py-24 px-6 overflow-hidden">
+    <div class="mesh-gradient-bg opacity-20"></div>
+    <div class="max-w-3xl mx-auto text-center relative z-10">
+      <div class="space-y-6 reveal">
+        <h2 class="text-3xl md:text-5xl font-semibold tracking-[-0.03em] leading-tight text-canvas font-sans">
+          Start exploring the Grand Line.
+        </h2>
+        <p class="text-sm md:text-base text-text-secondary max-w-lg mx-auto font-sans">
+          No account needed. No paywalls. Just every One Piece chapter ever published, at your fingertips.
+        </p>
+        <a href="/colorise"
+          class="inline-block px-8 py-3.5 rounded-full bg-canvas hover:bg-canvas-soft text-ink font-semibold text-sm tracking-wider uppercase transition-all duration-150 shadow-vercel-md cursor-pointer hover:scale-105 active:scale-95">
+          Enter the Archive
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-hairline bg-canvas py-12 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-3">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current text-accent">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+        </svg>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-muted-readable font-semibold">StrawHat Studio &copy; 2026 &middot; One Piece Archive</span>
+      </div>
+      <div class="flex gap-6 text-[10px] font-mono text-muted-readable uppercase">
+        <span class="hover:text-ink transition-colors cursor-default">Not affiliated with Toei or Shueisha</span>
+        <a href="https://github.com" class="hover:text-ink transition-colors">GitHub</a>
+      </div>
+    </div>
+  </footer>
 </Layout>
+
+<style>
+  .reveal-d2 { transition-delay: 0.1s; }
+  .reveal-d3 { transition-delay: 0.2s; }
+</style>

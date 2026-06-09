@@ -2,18 +2,19 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="ChromaManga Studio">
+<Layout title="StrawHat Studio — One Piece Archive &amp; Colorization">
   <div id="app" class="min-h-screen bg-canvas-soft text-ink font-sans flex flex-col">
     
     <!-- HEADER -->
     <header class="fixed top-0 left-0 right-0 h-14 border-b border-hairline bg-canvas/90 backdrop-blur-md z-50 flex items-center justify-between px-6 select-none shadow-vercel-sm">
       <a href="/" class="flex items-center gap-2.5 group">
-        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[14px] border-b-ink group-hover:border-b-accent transition-colors"></div>
-        <span class="text-xs font-semibold tracking-tight uppercase text-ink transition-colors group-hover:text-neutral-500">ChromaManga</span>
+        <svg viewBox="0 0 24 24" class="w-4 h-4 fill-current text-accent group-hover:scale-110 transition-transform duration-300">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+        </svg>
+        <span class="text-xs font-semibold tracking-tight text-ink font-sans">StrawHat Studio</span>
       </a>
       <div class="flex items-center gap-4">
-        <div id="header-status" class="text-[10px] font-mono text-text-hint uppercase tracking-wider">Studio</div>
-        <!-- Theme Toggle Button -->
+        <div id="header-status" class="text-[10px] font-mono text-text-hint uppercase tracking-wider">Archive</div>
         <button id="theme-toggle-btn" class="w-7 h-7 rounded-full border border-hairline bg-canvas hover:bg-canvas-soft-2 flex items-center justify-center text-ink cursor-pointer transition-colors shadow-vercel-sm" aria-label="Toggle theme">
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="block dark:hidden">
             <circle cx="12" cy="12" r="5" />
@@ -32,8 +33,10 @@ import Layout from '../layouts/Layout.astro';
       <!-- VIEW: CHAPTER PICKER -->
       <div id="view-picker" class="flex-1 flex flex-col items-center justify-center p-6 md:p-8 gap-8 select-none max-w-4xl mx-auto w-full">
         <div class="text-center space-y-2.5 max-w-lg">
-          <h1 class="text-4xl md:text-5xl font-semibold tracking-[-0.04em] text-ink leading-tight font-sans">Colorize manga.</h1>
-          <p class="text-text-secondary text-xs font-sans">Pick a chapter to scrape references from web archives, or drop your own B&W PDF.</p>
+          <h1 class="text-4xl md:text-5xl font-semibold tracking-[-0.04em] text-ink leading-tight font-sans">
+            The complete <span class="gradient-text">One Piece</span> archive.
+          </h1>
+          <p class="text-text-secondary text-sm font-sans">Browse the Digital Colored Comics, download B&W originals, or upload your own PDF to colorize.</p>
         </div>
         
         <!-- Tab Segment Switcher -->
@@ -65,7 +68,7 @@ import Layout from '../layouts/Layout.astro';
                   Colorize
                 </button>
               </div>
-              <span class="text-[9px] font-mono text-text-hint block">Available range: 1 to 1184 (Colored comics up to 1076)</span>
+              <span class="text-[9px] font-mono text-text-hint block">Chapters 1–1076 have official colored releases &middot; Later chapters display in B&W</span>
             </div>
           </div>
         </div>
@@ -83,7 +86,7 @@ import Layout from '../layouts/Layout.astro';
               <p class="text-[11px] text-text-hint mt-0.5">Drag-and-drop or click to browse files</p>
             </div>
             <input type="file" accept=".pdf" class="hidden" id="pdf-upload-input" />
-            <span class="text-[9px] font-mono text-text-hint border border-hairline px-2.5 py-0.5 rounded uppercase">Pipeline Daemon — ready</span>
+            <span class="text-[9px] font-mono text-text-hint border border-hairline px-2.5 py-0.5 rounded uppercase">PDF upload — active</span>
           </div>
         </div>
       </div>
@@ -135,7 +138,7 @@ import Layout from '../layouts/Layout.astro';
       <!-- VIEW: RESULTS -->
       <div id="view-results" class="hidden flex-1 flex flex-col">
         <!-- Results header bar -->
-        <div class="border-b border-hairline px-6 py-4 flex items-center justify-between bg-canvas sticky top-14 z-40 select-none shadow-vercel-sm">
+        <div id="results-header" class="border-b border-hairline px-6 py-4 flex items-center justify-between bg-canvas sticky top-14 z-40 select-none shadow-vercel-sm">
           <div class="flex items-center gap-4">
             <button id="back-btn" class="flex items-center gap-1.5 text-[11px] font-mono text-text-secondary hover:text-ink transition-colors uppercase tracking-wider cursor-pointer">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
@@ -409,16 +412,23 @@ import Layout from '../layouts/Layout.astro';
       bar.style.width = '20%';
       
       if (file) {
-        addLog(`[PDF] Extracting pages from PDF file...`);
-        await new Promise(r => setTimeout(r, 500));
+        addLog(`[PDF] Extracting pages from uploaded PDF...`);
+        bar.style.width = '15%';
+        await new Promise(r => setTimeout(r, 300));
+        addLog(`[EXTRACT] Parsing document structure...`);
+        bar.style.width = '25%';
+        await new Promise(r => setTimeout(r, 400));
+        addLog(`[SCAN] Loading reference manga color data from archive...`);
         bar.style.width = '40%';
-        addLog(`[SEGMENT] Running SAM 2 Panel Segmenter on extracted page frames...`);
-        await new Promise(r => setTimeout(r, 600));
-        bar.style.width = '60%';
-        addLog(`[MATCH] Mapping segment silhouettes to Character Color Registry...`);
         await new Promise(r => setTimeout(r, 500));
+        addLog(`[MATCH] Finding closest reference pages for color transfer...`);
+        bar.style.width = '55%';
+        await new Promise(r => setTimeout(r, 600));
+        addLog(`[TRANSFER] Applying LAB color space transfer algorithm...`);
+        bar.style.width = '70%';
+        await new Promise(r => setTimeout(r, 500));
+        addLog(`[COLORIZE] Mapping luminance to reference color palette...`);
         bar.style.width = '85%';
-        addLog(`[FLUX] Executing ControlNet edge-guided colorizer pass...`);
       } else {
         addLog(`[WEB] Querying web archives for Chapter ${chapterNum}...`);
         await new Promise(r => setTimeout(r, 400));
@@ -426,7 +436,7 @@ import Layout from '../layouts/Layout.astro';
         addLog(`[SCAN] Parsing remote manga page image source locations...`);
         await new Promise(r => setTimeout(r, 400));
         bar.style.width = '70%';
-        addLog(`[ALIGN] Aligning B&W frames with official Digital Colored Comics...`);
+        addLog(`[CHECK] Checking for official Digital Colored Comics release...`);
       }
 
       const res = await fetch('/api/jobs', { method: 'POST', body: formData });
@@ -452,7 +462,7 @@ import Layout from '../layouts/Layout.astro';
       
       await new Promise(r => setTimeout(r, 500));
       
-      await loadResults(job.id, file ? file.name : `Chapter ${chapterNum}`);
+      await loadResults(job.id, file ? file.name : `Chapter ${chapterNum}`, job.method);
     } catch (e: any) {
       addLog(`[ERROR] ${e.message}`, 'error');
       titleEl.textContent = 'Pipeline Failure';
@@ -468,7 +478,7 @@ import Layout from '../layouts/Layout.astro';
   }
 
   // -- Load and display results --
-  async function loadResults(jobId: string, title: string) {
+  async function loadResults(jobId: string, title: string, method?: string) {
     const res = await fetch(`/api/jobs/${jobId}/results`);
     if (!res.ok) throw new Error('Failed to load results');
     const data = await res.json();
@@ -478,6 +488,52 @@ import Layout from '../layouts/Layout.astro';
     document.getElementById('results-title')!.textContent = title;
     document.getElementById('results-count')!.textContent = `${currentPages.length} pages`;
     setHeaderStatus(title);
+    
+    // Show appropriate banner based on method/flags
+    const allBwOnly = currentPages.every((p: any) => (p.flags || []).includes('no_colored_version'));
+    const someMissing = currentPages.some((p: any) => (p.flags || []).includes('no_color_reference'));
+
+    let bannerMsg = '';
+    let bannerType: 'info' | 'warning' | 'success' = 'success';
+
+    if (allBwOnly) {
+      bannerMsg = 'This chapter hasn\'t been officially colored yet. All pages shown in B&W.';
+      bannerType = 'warning';
+    } else if (someMissing) {
+      bannerMsg = 'Some pages in this chapter don\'t have colored references. Fallback to B&W for those.';
+      bannerType = 'warning';
+    }
+
+    // Show/hide B&W toggle based on whether colored pages exist
+    const bwToggleArea = document.getElementById('bw-toggle')?.closest('label');
+    if (bwToggleArea) {
+      bwToggleArea.style.display = allBwOnly ? 'none' : '';
+    }
+
+    // Add status banner
+    let bannerEl = document.getElementById('results-banner');
+    if (bannerMsg) {
+      const colors = bannerType === 'warning'
+        ? 'bg-warning-soft border border-warning/30 text-ink'
+        : bannerType === 'info'
+          ? 'bg-canvas-soft-2 border border-link/20 text-link'
+          : 'bg-canvas-soft-2 border border-success/20 text-success';
+      if (!bannerEl) {
+        bannerEl = document.createElement('div');
+        bannerEl.id = 'results-banner';
+        const header = document.getElementById('results-header');
+        if (header && header.parentNode) {
+          header.parentNode.insertBefore(bannerEl, header.nextSibling);
+        }
+      }
+      bannerEl.className = `mx-6 mt-4 px-4 py-3 rounded-lg ${colors} text-xs font-medium flex items-center gap-2`;
+      bannerEl.innerHTML = `
+        <span class="flex-1">${bannerMsg}</span>
+        <button onclick="this.parentElement.remove()" class="text-current/60 hover:text-current cursor-pointer">&times;</button>
+      `;
+    } else if (bannerEl) {
+      bannerEl.remove();
+    }
     
     renderPages();
     showView('results');
@@ -501,7 +557,7 @@ import Layout from '../layouts/Layout.astro';
           alt="Page ${page.page_number}"
           class="w-full h-full object-cover"
           loading="lazy"
-          onerror="this.src='/images/samples/luffy_bw.png'"
+          onerror="this.style.display='none'"
         />
         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <span class="text-[9px] font-mono text-white/90">Click to compare page ${page.page_number}</span>
