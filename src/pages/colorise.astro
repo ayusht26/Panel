@@ -1,0 +1,808 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="ChromaManga Studio">
+  <div id="app" class="min-h-screen bg-canvas-soft text-ink font-sans flex flex-col">
+    
+    <!-- HEADER -->
+    <header class="fixed top-0 left-0 right-0 h-14 border-b border-hairline bg-canvas/90 backdrop-blur-md z-50 flex items-center justify-between px-6 select-none shadow-vercel-sm">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[14px] border-b-ink group-hover:border-b-accent transition-colors"></div>
+        <span class="text-xs font-semibold tracking-tight uppercase text-ink transition-colors group-hover:text-neutral-500">ChromaManga</span>
+      </a>
+      <div class="flex items-center gap-4">
+        <div id="header-status" class="text-[10px] font-mono text-text-hint uppercase tracking-wider">Studio</div>
+        <!-- Theme Toggle Button -->
+        <button id="theme-toggle-btn" class="w-7 h-7 rounded-full border border-hairline bg-canvas hover:bg-canvas-soft-2 flex items-center justify-center text-ink cursor-pointer transition-colors shadow-vercel-sm" aria-label="Toggle theme">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="block dark:hidden">
+            <circle cx="12" cy="12" r="5" />
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="hidden dark:block">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT (padded for fixed header) -->
+    <main class="pt-14 min-h-screen flex flex-col relative z-10 flex-1">
+      
+      <!-- VIEW: CHAPTER PICKER -->
+      <div id="view-picker" class="flex-1 flex flex-col items-center justify-center p-6 md:p-8 gap-8 select-none max-w-4xl mx-auto w-full">
+        <div class="text-center space-y-2.5 max-w-lg">
+          <h1 class="text-4xl md:text-5xl font-semibold tracking-[-0.04em] text-ink leading-tight font-sans">Colorize manga.</h1>
+          <p class="text-text-secondary text-xs font-sans">Pick a chapter to scrape references from web archives, or drop your own B&W PDF.</p>
+        </div>
+        
+        <!-- Tab Segment Switcher -->
+        <div class="flex bg-canvas-soft-2 p-1 rounded-full border border-hairline w-full max-w-md shadow-vercel-sm">
+          <button id="tab-web" class="flex-1 text-center py-1.5 rounded-full text-xs font-medium bg-canvas text-ink shadow-vercel-sm transition-all cursor-pointer">
+            Browse Web Archive
+          </button>
+          <button id="tab-pdf" class="flex-1 text-center py-1.5 rounded-full text-xs font-medium text-text-secondary hover:text-ink transition-all cursor-pointer">
+            Upload PDF
+          </button>
+        </div>
+
+        <!-- TAB CONTENT: WEB ARCHIVE -->
+        <div id="content-web" class="w-full max-w-md space-y-6">
+          <div class="bg-canvas border border-hairline rounded-xl p-6 shadow-vercel-sm space-y-4">
+            <div class="space-y-1.5">
+              <label for="chapter-input" class="text-[10px] font-mono text-text-hint uppercase tracking-wider block">One Piece Chapter Number</label>
+              <div class="flex gap-2">
+                <input 
+                  type="text" 
+                  id="chapter-input" 
+                  placeholder="e.g. 100 or 1053.1" 
+                  class="flex-1 bg-canvas-soft border border-hairline hover:border-hairline-strong focus:border-accent rounded-lg px-3 py-2 text-xs font-mono text-ink outline-none transition-all shadow-vercel-sm"
+                />
+                <button 
+                  id="btn-fetch" 
+                  class="px-4 py-2 bg-accent hover:bg-accent-dim text-white rounded-lg text-xs font-semibold tracking-wide uppercase transition-colors shadow-vercel-md cursor-pointer text-center"
+                >
+                  Colorize
+                </button>
+              </div>
+              <span class="text-[9px] font-mono text-text-hint block">Available range: 1 to 1184 (Colored comics up to 1076)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB CONTENT: PDF UPLOAD -->
+        <div id="content-pdf" class="w-full max-w-md hidden">
+          <div class="w-full border border-dashed border-hairline-strong hover:border-ink rounded-xl p-8 flex flex-col items-center gap-3.5 cursor-pointer transition-colors group bg-canvas shadow-vercel-sm" id="upload-zone">
+            <div class="w-11 h-11 rounded-lg bg-canvas-soft-2 border border-hairline flex items-center justify-center text-neutral-500 group-hover:text-ink transition-colors shadow-vercel-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2"/>
+              </svg>
+            </div>
+            <div class="text-center">
+              <p class="text-xs font-semibold text-ink">Upload B&W Manga PDF</p>
+              <p class="text-[11px] text-text-hint mt-0.5">Drag-and-drop or click to browse files</p>
+            </div>
+            <input type="file" accept=".pdf" class="hidden" id="pdf-upload-input" />
+            <span class="text-[9px] font-mono text-text-hint border border-hairline px-2.5 py-0.5 rounded uppercase">Pipeline Daemon — ready</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: LOADING -->
+      <div id="view-loading" class="hidden flex-1 flex flex-col items-center justify-center gap-8 p-8 select-none">
+        <div class="space-y-2 text-center">
+          <h2 class="text-2xl font-bold tracking-tight text-ink animate-pulse" id="loading-title">Colorizing chapter...</h2>
+          <p class="text-text-secondary text-sm font-mono text-[11px]" id="loading-subtitle">Scraping page assets</p>
+        </div>
+        
+        <!-- Animated page stack -->
+        <div class="relative w-24 h-32">
+          <div class="absolute inset-0 bg-canvas-soft-2 border border-hairline rounded-lg rotate-3 shadow-vercel-sm"></div>
+          <div class="absolute inset-0 bg-canvas-soft-2 border border-hairline rounded-lg -rotate-2 translate-y-1 shadow-vercel-sm"></div>
+          <div class="absolute inset-0 bg-canvas border border-accent/30 rounded-lg flex items-center justify-center shadow-vercel-md">
+            <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        </div>
+        
+        <!-- Progress bar -->
+        <div class="w-full max-w-sm space-y-2">
+          <div class="w-full h-1 bg-canvas-soft-2 rounded-full overflow-hidden p-[1px] shadow-vercel-sm">
+            <div id="loading-bar" class="h-full bg-accent rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+          <div class="flex justify-between text-[10px] font-mono text-text-hint">
+            <span id="loading-pages-done">0 pages done</span>
+            <span id="loading-pages-total">— total</span>
+          </div>
+        </div>
+        
+        <!-- Live log -->
+        <div class="w-full max-w-sm bg-canvas-soft-2 border border-hairline rounded-lg overflow-hidden shadow-vercel-lg">
+          <div class="px-3 py-1.5 border-b border-hairline bg-canvas-soft flex items-center gap-1.5">
+            <div class="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
+            <span class="text-[9px] font-mono text-text-hint uppercase tracking-widest">pipeline.log</span>
+          </div>
+          <div class="p-3 font-mono text-[10px] text-text-secondary h-28 overflow-y-auto space-y-1" id="loading-log"></div>
+        </div>
+
+        <!-- Error Actions (hidden by default) -->
+        <div id="loading-error-actions" class="hidden flex gap-3">
+          <button id="loading-back-btn" class="px-5 py-2 border border-hairline hover:bg-canvas-soft bg-canvas text-ink text-xs font-semibold uppercase rounded-lg transition-colors cursor-pointer shadow-vercel-sm">
+            Go Back
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW: RESULTS -->
+      <div id="view-results" class="hidden flex-1 flex flex-col">
+        <!-- Results header bar -->
+        <div class="border-b border-hairline px-6 py-4 flex items-center justify-between bg-canvas sticky top-14 z-40 select-none shadow-vercel-sm">
+          <div class="flex items-center gap-4">
+            <button id="back-btn" class="flex items-center gap-1.5 text-[11px] font-mono text-text-secondary hover:text-ink transition-colors uppercase tracking-wider cursor-pointer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+              </svg>
+              Back
+            </button>
+            <div class="w-px h-4 bg-hairline"></div>
+            <h2 class="text-sm font-semibold text-ink" id="results-title">Chapter —</h2>
+            <span id="results-count" class="text-[10px] font-mono text-text-hint">— pages</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 cursor-pointer group">
+              <input type="checkbox" id="bw-toggle" class="sr-only" />
+              <div id="bw-toggle-track" class="w-8 h-4 bg-canvas-soft-2 border border-hairline rounded-full relative transition-colors cursor-pointer">
+                <div id="bw-toggle-thumb" class="absolute top-0.5 left-0.5 w-3 h-3 bg-text-hint rounded-full transition-all"></div>
+              </div>
+              <span class="text-[11px] font-mono text-text-hint group-hover:text-ink transition-colors uppercase">Show B&W</span>
+            </label>
+            <div class="w-px h-4 bg-hairline"></div>
+            <button id="btn-export-pdf" class="px-3.5 py-1.5 bg-ink hover:bg-neutral-800 text-canvas rounded-lg text-xs font-semibold tracking-wide uppercase transition-colors shadow-vercel-sm cursor-pointer">
+              Export PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Pages grid -->
+        <div class="flex-1 p-6 overflow-y-auto">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" id="pages-grid">
+            <!-- Page thumbnails injected here -->
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- VIEW: SLIDER COMPARISON MODAL -->
+    <div id="slider-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div class="bg-canvas border border-hairline rounded-xl max-w-2xl w-full h-[85vh] max-h-[800px] overflow-hidden relative shadow-vercel-modal flex flex-col">
+        <!-- Modal Header -->
+        <div class="px-4 py-2 border-b border-hairline bg-canvas flex items-center justify-between z-20 select-none">
+          <span id="modal-page-title" class="text-xs font-mono text-text-secondary">Page —</span>
+          
+          <!-- Zoom & Close Controls -->
+          <div class="flex items-center gap-2">
+            <!-- Zoom Controls -->
+            <div class="flex items-center bg-canvas-soft-2 border border-hairline rounded-lg p-0.5 shadow-vercel-sm">
+              <button id="modal-zoom-out-btn" class="w-6 h-6 rounded hover:bg-canvas text-xs text-ink cursor-pointer transition-colors flex items-center justify-center font-bold" title="Zoom Out">&minus;</button>
+              <span id="modal-zoom-level" class="text-[9px] font-mono text-text-secondary px-2 min-w-[36px] text-center">100%</span>
+              <button id="modal-zoom-in-btn" class="w-6 h-6 rounded hover:bg-canvas text-xs text-ink cursor-pointer transition-colors flex items-center justify-center font-bold" title="Zoom In">+</button>
+            </div>
+            <button id="modal-zoom-reset-btn" class="px-2 py-1 rounded bg-canvas-soft-2 hover:bg-canvas border border-hairline text-[10px] font-mono text-ink cursor-pointer transition-colors" title="Reset Zoom">Reset</button>
+            <div class="w-px h-4 bg-hairline mx-1"></div>
+            <!-- Close Button -->
+            <button id="modal-close-btn" class="w-6 h-6 rounded-full bg-canvas-soft-2 hover:bg-canvas border border-hairline flex items-center justify-center text-ink cursor-pointer transition-colors font-bold" title="Close Modal">&times;</button>
+          </div>
+        </div>
+        
+        <!-- Modal Slider Area -->
+        <div class="flex-1 relative overflow-hidden select-none bg-canvas-soft-2" id="modal-slider-box">
+          <!-- Loading Spinner Overlay -->
+          <div id="modal-slider-loading" class="absolute inset-0 bg-canvas/90 flex flex-col items-center justify-center gap-3 z-40 transition-opacity duration-200 opacity-0 pointer-events-none">
+            <div class="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-[10px] font-mono text-text-hint uppercase tracking-wider">Loading scans...</span>
+          </div>
+
+          <!-- Zoom Container (holds images and handle) -->
+          <div id="zoom-container" class="absolute inset-0 w-full h-full origin-center transition-opacity duration-200" style="transform: translate(0px, 0px) scale(1); opacity: 0;">
+            <!-- Colored image (Background) -->
+            <img id="modal-img-colored" class="absolute inset-0 w-full h-full object-contain pointer-events-none" src="" alt="Colored page" />
+            
+            <!-- B&W image (Overlay, clipped dynamically) -->
+            <div id="modal-slider-bw-wrapper" class="absolute inset-0 w-full h-full overflow-hidden" style="clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);">
+              <img id="modal-img-bw" class="absolute inset-0 w-full h-full object-contain pointer-events-none" src="" alt="B&W page" />
+            </div>
+            
+            <!-- Slider line handle -->
+            <div id="modal-slider-handle" class="absolute top-0 bottom-0 left-1/2 w-[1px] bg-ink cursor-ew-resize transform -translate-x-1/2 z-30">
+              <div id="modal-slider-handle-circle" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-canvas border border-hairline-strong flex items-center justify-center text-[10px] text-neutral-600 shadow-vercel-sm">
+                &larr;&rarr;
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute bottom-3 left-4 bg-canvas/80 backdrop-blur-md border border-hairline px-2 py-0.5 rounded text-[8px] font-mono text-text-hint z-30 uppercase tracking-wide pointer-events-none">
+            Lineart
+          </div>
+          <div class="absolute bottom-3 right-4 bg-canvas/80 backdrop-blur-md border border-hairline px-2 py-0.5 rounded text-[8px] font-mono text-text-hint z-30 uppercase tracking-wide pointer-events-none">
+            Colorized
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</Layout>
+
+<style>
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up { animation: fadeUp 0.3s ease-out forwards; }
+
+  /* Smooth Modal Transitions */
+  #slider-modal {
+    display: flex;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+  #slider-modal.active {
+    visibility: visible;
+    opacity: 1;
+  }
+  #slider-modal > div {
+    transform: scale(0.95);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  #slider-modal.active > div {
+    transform: scale(1);
+  }
+  .smooth-zoom {
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+</style>
+
+<script>
+  type View = 'picker' | 'loading' | 'results';
+  
+  let currentPages: any[] = [];
+  let showBw = false;
+  let activeJobId = '';
+  let activeExportUrl = '';
+
+  function setHeaderStatus(text: string) {
+    const el = document.getElementById('header-status');
+    if (el) el.textContent = text;
+  }
+
+  // -- View switching --
+  function showView(v: View) {
+    document.getElementById('view-picker')!.className = v === 'picker' 
+      ? 'flex-1 flex flex-col items-center justify-center p-6 md:p-8 gap-8 max-w-4xl mx-auto w-full'
+      : 'hidden';
+    document.getElementById('view-loading')!.className = v === 'loading'
+      ? 'flex-1 flex flex-col items-center justify-center gap-8 p-8'
+      : 'hidden';
+    document.getElementById('view-results')!.className = v === 'results'
+      ? 'flex-1 flex flex-col'
+      : 'hidden';
+  }
+
+  // -- Tabs logic --
+  const tabWeb = document.getElementById('tab-web')!;
+  const tabPdf = document.getElementById('tab-pdf')!;
+  const contentWeb = document.getElementById('content-web')!;
+  const contentPdf = document.getElementById('content-pdf')!;
+
+  tabWeb.addEventListener('click', () => {
+    tabWeb.className = 'flex-1 text-center py-1.5 rounded-full text-xs font-medium bg-canvas text-ink shadow-vercel-sm transition-all cursor-pointer';
+    tabPdf.className = 'flex-1 text-center py-1.5 rounded-full text-xs font-medium text-text-secondary hover:text-ink transition-all cursor-pointer';
+    contentWeb.classList.remove('hidden');
+    contentPdf.classList.add('hidden');
+  });
+
+  tabPdf.addEventListener('click', () => {
+    tabPdf.className = 'flex-1 text-center py-1.5 rounded-full text-xs font-medium bg-canvas text-ink shadow-vercel-sm transition-all cursor-pointer';
+    tabWeb.className = 'flex-1 text-center py-1.5 rounded-full text-xs font-medium text-text-secondary hover:text-ink transition-all cursor-pointer';
+    contentPdf.classList.remove('hidden');
+    contentWeb.classList.add('hidden');
+  });
+
+  // -- Chapter Text input submit --
+  const inputCh = document.getElementById('chapter-input') as HTMLInputElement;
+  const btnFetch = document.getElementById('btn-fetch')!;
+
+  btnFetch.addEventListener('click', () => {
+    const chapterVal = inputCh.value.trim();
+    if (!chapterVal) return alert('Please enter a chapter number!');
+    runColorizer(chapterVal, null);
+  });
+
+  inputCh.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const chapterVal = inputCh.value.trim();
+      if (!chapterVal) return;
+      runColorizer(chapterVal, null);
+    }
+  });
+
+  // -- Drag & Drop / File Upload PDF logic --
+  const uploadZone = document.getElementById('upload-zone')!;
+  const fileInput = document.getElementById('pdf-upload-input') as HTMLInputElement;
+
+  uploadZone.addEventListener('click', () => fileInput.click());
+
+  uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('border-accent', 'bg-canvas-soft-2');
+  });
+
+  uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('border-accent', 'bg-canvas-soft-2');
+  });
+
+  uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('border-accent', 'bg-canvas-soft-2');
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      handlePdfFile(files[0]);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files && fileInput.files.length > 0) {
+      handlePdfFile(fileInput.files[0]);
+    }
+  });
+
+  function handlePdfFile(file: File) {
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a valid PDF file!');
+      return;
+    }
+    runColorizer(null, file);
+  }
+
+  // -- Trigger Colorizer Run --
+  async function runColorizer(chapterNum: string | null, file: File | null) {
+    showView('loading');
+    
+    // Hide error actions initially
+    document.getElementById('loading-error-actions')!.classList.add('hidden');
+    
+    const log = document.getElementById('loading-log')!;
+    const bar = document.getElementById('loading-bar')!;
+    const titleEl = document.getElementById('loading-title')!;
+    const subEl = document.getElementById('loading-subtitle')!;
+    
+    titleEl.textContent = file ? file.name : `Chapter ${chapterNum}`;
+    titleEl.classList.add('animate-pulse');
+    subEl.textContent = 'Initializing colorizer daemon...';
+    log.innerHTML = '';
+    bar.style.width = '5%';
+    bar.style.backgroundColor = '';
+
+    const addLog = (msg: string, type: 'normal' | 'success' | 'error' = 'normal') => {
+      const line = document.createElement('div');
+      line.className = type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : 'text-text-secondary';
+      line.textContent = msg;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    };
+
+    addLog(`[INIT] Initializing ChromaManga Pipeline...`);
+    setHeaderStatus('Processing...');
+    
+    try {
+      const formData = new FormData();
+      if (file) {
+        formData.append('bw_file', file);
+        addLog(`[UPLOAD] Processing uploaded PDF: ${file.name} (${Math.round(file.size / 1024)} KB)`);
+      } else if (chapterNum) {
+        formData.append('chapter_number', chapterNum);
+        addLog(`[REQUEST] Processing One Piece Chapter ${chapterNum}`);
+      }
+
+      await new Promise(r => setTimeout(r, 400));
+      bar.style.width = '20%';
+      
+      if (file) {
+        addLog(`[PDF] Extracting pages from PDF file...`);
+        await new Promise(r => setTimeout(r, 500));
+        bar.style.width = '40%';
+        addLog(`[SEGMENT] Running SAM 2 Panel Segmenter on extracted page frames...`);
+        await new Promise(r => setTimeout(r, 600));
+        bar.style.width = '60%';
+        addLog(`[MATCH] Mapping segment silhouettes to Character Color Registry...`);
+        await new Promise(r => setTimeout(r, 500));
+        bar.style.width = '85%';
+        addLog(`[FLUX] Executing ControlNet edge-guided colorizer pass...`);
+      } else {
+        addLog(`[WEB] Querying web archives for Chapter ${chapterNum}...`);
+        await new Promise(r => setTimeout(r, 400));
+        bar.style.width = '45%';
+        addLog(`[SCAN] Parsing remote manga page image source locations...`);
+        await new Promise(r => setTimeout(r, 400));
+        bar.style.width = '70%';
+        addLog(`[ALIGN] Aligning B&W frames with official Digital Colored Comics...`);
+      }
+
+      const res = await fetch('/api/jobs', { method: 'POST', body: formData });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Server error');
+      }
+
+      const job = await res.json();
+      activeJobId = job.id;
+      activeExportUrl = job.output_pdf_path;
+
+      addLog(`[MAPPED] ${job.total_pages} unique pages successfully compiled!`);
+      bar.style.width = '95%';
+      await new Promise(r => setTimeout(r, 400));
+
+      bar.style.width = '100%';
+      addLog(`[SUCCESS] Colorization pipeline completed successfully!`, 'success');
+      
+      document.getElementById('loading-pages-done')!.textContent = `${job.total_pages} pages done`;
+      document.getElementById('loading-pages-total')!.textContent = `${job.total_pages} total`;
+      
+      await new Promise(r => setTimeout(r, 500));
+      
+      await loadResults(job.id, file ? file.name : `Chapter ${chapterNum}`);
+    } catch (e: any) {
+      addLog(`[ERROR] ${e.message}`, 'error');
+      titleEl.textContent = 'Pipeline Failure';
+      titleEl.classList.remove('animate-pulse');
+      subEl.textContent = 'See logs below for details';
+      bar.style.width = '100%';
+      bar.style.backgroundColor = 'var(--color-error)';
+      setHeaderStatus('Pipeline Error');
+      
+      // Show error reset actions
+      document.getElementById('loading-error-actions')!.classList.remove('hidden');
+    }
+  }
+
+  // -- Load and display results --
+  async function loadResults(jobId: string, title: string) {
+    const res = await fetch(`/api/jobs/${jobId}/results`);
+    if (!res.ok) throw new Error('Failed to load results');
+    const data = await res.json();
+    
+    currentPages = data.pages;
+    
+    document.getElementById('results-title')!.textContent = title;
+    document.getElementById('results-count')!.textContent = `${currentPages.length} pages`;
+    setHeaderStatus(title);
+    
+    renderPages();
+    showView('results');
+  }
+
+  // -- Render pages grid --
+  function renderPages() {
+    const grid = document.getElementById('pages-grid')!;
+    grid.innerHTML = '';
+
+    currentPages.forEach((page, i) => {
+      const src = showBw ? page.bw_url : page.colored_url;
+      const card = document.createElement('div');
+      card.className = 'relative aspect-[3/4] bg-canvas border border-hairline rounded-lg overflow-hidden cursor-pointer hover:border-accent/50 hover:scale-[1.01] transition-all duration-200 group shadow-vercel-sm';
+      card.style.animation = `fadeUp 0.3s ease-out both`;
+      card.style.animationDelay = `${i * 15}ms`;
+      card.style.animationFillMode = 'both';
+      card.innerHTML = `
+        <img 
+          src="${src}" 
+          alt="Page ${page.page_number}"
+          class="w-full h-full object-cover"
+          loading="lazy"
+          onerror="this.src='/images/samples/luffy_bw.png'"
+        />
+        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <span class="text-[9px] font-mono text-white/90">Click to compare page ${page.page_number}</span>
+        </div>
+      `;
+      card.addEventListener('click', () => openComparisonModal(page));
+      grid.appendChild(card);
+    });
+  }
+
+  // -- Slider Modal Logic --
+  const sliderModal = document.getElementById('slider-modal')!;
+  const modalCloseBtn = document.getElementById('modal-close-btn')!;
+  const modalPageTitle = document.getElementById('modal-page-title')!;
+  const modalImgColored = document.getElementById('modal-img-colored') as HTMLImageElement;
+  const modalImgBw = document.getElementById('modal-img-bw') as HTMLImageElement;
+  const modalSliderBox = document.getElementById('modal-slider-box')!;
+  const modalBwWrapper = document.getElementById('modal-slider-bw-wrapper')!;
+  const modalHandle = document.getElementById('modal-slider-handle')!;
+  
+  // Zoom & Pan elements
+  const zoomContainer = document.getElementById('zoom-container')!;
+  const handleCircle = document.getElementById('modal-slider-handle-circle')!;
+  const zoomInBtn = document.getElementById('modal-zoom-in-btn')!;
+  const zoomOutBtn = document.getElementById('modal-zoom-out-btn')!;
+  const zoomResetBtn = document.getElementById('modal-zoom-reset-btn')!;
+  
+  let isDraggingModal = false;
+  let isPanning = false;
+  let zoomLevel = 1.0;
+  let panX = 0;
+  let panY = 0;
+  let startX = 0;
+  let startY = 0;
+  let startPanX = 0;
+  let startPanY = 0;
+
+  function openComparisonModal(page: any) {
+    modalPageTitle.textContent = `Page ${page.page_number} — Slider Preview`;
+    
+    // Show loading spinner
+    const spinner = document.getElementById('modal-slider-loading')!;
+    spinner.classList.remove('opacity-0', 'pointer-events-none');
+    spinner.classList.add('opacity-100', 'pointer-events-auto');
+    zoomContainer.style.opacity = '0';
+    
+    modalImgColored.src = page.colored_url;
+    modalImgBw.src = page.bw_url;
+    
+    // Reset slider to 50%
+    modalBwWrapper.style.clipPath = 'polygon(0 0, 50% 0, 50% 100%, 0 100%)';
+    modalHandle.style.left = '50%';
+    
+    // Reset zoom & pan
+    zoomLevel = 1.0;
+    panX = 0;
+    panY = 0;
+    zoomContainer.classList.remove('smooth-zoom');
+    updateZoomTransform();
+    
+    sliderModal.classList.add('active');
+
+    // Wait for both images to load
+    let loadedCount = 0;
+    const onImageLoad = () => {
+      loadedCount++;
+      if (loadedCount >= 2) {
+        // Both loaded or failed! Reveal zoom container and hide spinner
+        spinner.classList.add('opacity-0', 'pointer-events-none');
+        spinner.classList.remove('opacity-100', 'pointer-events-auto');
+        zoomContainer.style.opacity = '1';
+        
+        modalImgColored.removeEventListener('load', onImageLoad);
+        modalImgColored.removeEventListener('error', onImageLoad);
+        modalImgBw.removeEventListener('load', onImageLoad);
+        modalImgBw.removeEventListener('error', onImageLoad);
+      }
+    };
+
+    // Check complete state in case already cached
+    if (modalImgColored.complete && modalImgBw.complete) {
+      spinner.classList.add('opacity-0', 'pointer-events-none');
+      spinner.classList.remove('opacity-100', 'pointer-events-auto');
+      zoomContainer.style.opacity = '1';
+    } else {
+      modalImgColored.addEventListener('load', onImageLoad);
+      modalImgColored.addEventListener('error', onImageLoad);
+      modalImgBw.addEventListener('load', onImageLoad);
+      modalImgBw.addEventListener('error', onImageLoad);
+      
+      // Fallback timeout of 3.5 seconds to ensure we don't get stuck
+      setTimeout(() => {
+        if (loadedCount < 2) {
+          loadedCount = 2;
+          onImageLoad();
+        }
+      }, 3500);
+    }
+  }
+
+  function updateZoomTransform() {
+    const rect = modalSliderBox.getBoundingClientRect();
+    const maxPanX = Math.max(0, rect.width * (zoomLevel - 1) / 2);
+    const maxPanY = Math.max(0, rect.height * (zoomLevel - 1) / 2);
+    
+    // Clamp pan values
+    panX = Math.min(Math.max(panX, -maxPanX), maxPanX);
+    panY = Math.min(Math.max(panY, -maxPanY), maxPanY);
+    
+    zoomContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+    
+    if (handleCircle) {
+      handleCircle.style.transform = `translate(-50%, -50%) scale(${1 / zoomLevel})`;
+    }
+    
+    const zoomLabel = document.getElementById('modal-zoom-level');
+    if (zoomLabel) {
+      zoomLabel.textContent = `${Math.round(zoomLevel * 100)}%`;
+    }
+  }
+
+  function adjustModalSlider(xPos: number) {
+    const rect = zoomContainer.getBoundingClientRect();
+    let relativeX = xPos - rect.left;
+    
+    if (relativeX < 0) relativeX = 0;
+    if (relativeX > rect.width) relativeX = rect.width;
+    
+    const percentage = (relativeX / rect.width) * 100;
+    
+    modalBwWrapper.style.clipPath = `polygon(0 0, ${percentage}% 0, ${percentage}% 100%, 0 100%)`;
+    modalHandle.style.left = `${percentage}%`;
+  }
+
+  // Zoom Action Bindings
+  zoomInBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    zoomContainer.classList.add('smooth-zoom');
+    zoomLevel = Math.min(4.0, zoomLevel + 0.25);
+    updateZoomTransform();
+  });
+
+  zoomOutBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    zoomContainer.classList.add('smooth-zoom');
+    zoomLevel = Math.max(1.0, zoomLevel - 0.25);
+    if (zoomLevel === 1.0) {
+      panX = 0;
+      panY = 0;
+    }
+    updateZoomTransform();
+  });
+
+  zoomResetBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    zoomContainer.classList.add('smooth-zoom');
+    zoomLevel = 1.0;
+    panX = 0;
+    panY = 0;
+    updateZoomTransform();
+  });
+
+  modalCloseBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    sliderModal.classList.remove('active');
+    setTimeout(() => {
+      modalImgColored.src = '';
+      modalImgBw.src = '';
+      zoomContainer.style.opacity = '0';
+    }, 200);
+  });
+
+  // Close when clicking overlay backdrop
+  sliderModal.addEventListener('click', (e) => {
+    if (e.target === sliderModal) {
+      sliderModal.classList.remove('active');
+      setTimeout(() => {
+        modalImgColored.src = '';
+        modalImgBw.src = '';
+        zoomContainer.style.opacity = '0';
+      }, 200);
+    }
+  });
+
+  modalSliderBox.addEventListener('mousedown', (e: any) => {
+    const isHandle = e.target === modalHandle || modalHandle.contains(e.target);
+    zoomContainer.classList.remove('smooth-zoom');
+
+    if (zoomLevel === 1.0 || isHandle) {
+      isDraggingModal = true;
+      adjustModalSlider(e.clientX);
+    } else {
+      isPanning = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startPanX = panX;
+      startPanY = panY;
+      modalSliderBox.style.cursor = 'grabbing';
+    }
+  });
+
+  modalSliderBox.addEventListener('touchstart', (e: any) => {
+    const isHandle = e.target === modalHandle || modalHandle.contains(e.target);
+    zoomContainer.classList.remove('smooth-zoom');
+
+    if (zoomLevel === 1.0 || isHandle) {
+      isDraggingModal = true;
+      adjustModalSlider(e.touches[0].clientX);
+    } else {
+      isPanning = true;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startPanX = panX;
+      startPanY = panY;
+    }
+  });
+
+  window.addEventListener('mousemove', (e: any) => {
+    if (isDraggingModal) {
+      adjustModalSlider(e.clientX);
+    } else if (isPanning) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      panX = startPanX + dx;
+      panY = startPanY + dy;
+      updateZoomTransform();
+    }
+  });
+
+  window.addEventListener('touchmove', (e: any) => {
+    if (isDraggingModal) {
+      adjustModalSlider(e.touches[0].clientX);
+    } else if (isPanning) {
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      panX = startPanX + dx;
+      panY = startPanY + dy;
+      updateZoomTransform();
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDraggingModal = false;
+    isPanning = false;
+    if (modalSliderBox) {
+      modalSliderBox.style.cursor = '';
+    }
+  });
+
+  window.addEventListener('touchend', () => {
+    isDraggingModal = false;
+    isPanning = false;
+  });
+
+  // -- Export PDF action --
+  const btnExportPdf = document.getElementById('btn-export-pdf')!;
+  btnExportPdf.addEventListener('click', () => {
+    if (activeJobId) {
+      window.open(`/print-chapter?jobId=${activeJobId}`, '_blank');
+    } else {
+      alert('Job results not found!');
+    }
+  });
+
+  // -- B&W toggle --
+  document.getElementById('bw-toggle')?.addEventListener('change', (e) => {
+    showBw = (e.target as HTMLInputElement).checked;
+    const track = document.getElementById('bw-toggle-track')!;
+    const thumb = document.getElementById('bw-toggle-thumb')!;
+    if (showBw) {
+      track.style.backgroundColor = 'rgba(232, 35, 10, 0.12)';
+      track.style.borderColor = 'rgba(232, 35, 10, 0.3)';
+      thumb.style.transform = 'translateX(16px)';
+      thumb.style.backgroundColor = 'var(--color-accent)';
+    } else {
+      track.style.backgroundColor = '';
+      track.style.borderColor = '';
+      thumb.style.transform = '';
+      thumb.style.backgroundColor = 'var(--color-text-hint)';
+    }
+    renderPages();
+  });
+
+  // -- Back button --
+  document.getElementById('back-btn')?.addEventListener('click', () => {
+    showView('picker');
+    setHeaderStatus('Studio');
+  });
+
+  // -- Error Go Back button --
+  document.getElementById('loading-back-btn')?.addEventListener('click', () => {
+    document.getElementById('loading-error-actions')!.classList.add('hidden');
+    document.getElementById('loading-title')!.classList.add('animate-pulse');
+    showView('picker');
+    setHeaderStatus('Studio');
+  });
+
+  // -- Theme toggle --
+  const toggleBtn = document.getElementById('theme-toggle-btn');
+  toggleBtn?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+</script>

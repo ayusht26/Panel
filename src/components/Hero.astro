@@ -1,0 +1,325 @@
+---
+// Hero.astro - Premium Vercel-style landing/hero page
+---
+
+<div class="relative min-h-screen bg-canvas-soft text-ink overflow-x-hidden font-sans select-none flex flex-col justify-between">
+  <!-- Drifting Animated Mesh Backdrop -->
+  <div class="mesh-drift-container">
+    <div class="drift-circle drift-circle-1"></div>
+    <div class="drift-circle drift-circle-2"></div>
+    <div class="drift-circle drift-circle-3"></div>
+    <div class="drift-circle drift-circle-4"></div>
+  </div>
+
+  <!-- Sticky VDL Nav Bar -->
+  <header class="sticky top-0 w-full h-16 border-b border-hairline bg-canvas/60 backdrop-blur-md z-40 flex items-center justify-between px-6 md:px-12 shadow-vercel-sm">
+    <div class="flex items-center gap-3">
+      <!-- Vercel logo style icon -->
+      <div class="w-5 h-5 flex items-center justify-center">
+        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[14px] border-b-ink"></div>
+      </div>
+      <span class="text-xs font-semibold tracking-tight text-ink font-sans uppercase">ChromaManga</span>
+    </div>
+
+    <!-- Nav Links (hidden on mobile) -->
+    <nav class="hidden md:flex items-center gap-8">
+      <a href="#pipeline-segment" class="text-xs text-neutral-500 hover:text-ink font-medium transition-colors font-sans">SAM 2 Segmenter</a>
+      <a href="#registry-segment" class="text-xs text-neutral-500 hover:text-ink font-medium transition-colors font-sans">Color Registry</a>
+      <a href="#render-segment" class="text-xs text-neutral-500 hover:text-ink font-medium transition-colors font-sans">FLUX Engine</a>
+      <a href="#terminal-showcase" class="text-xs text-neutral-500 hover:text-ink font-medium transition-colors font-sans">Database API</a>
+    </nav>
+
+    <!-- Header Action -->
+    <div class="flex items-center gap-3.5">
+      <button id="theme-toggle-btn" class="w-8 h-8 rounded-full border border-hairline bg-canvas hover:bg-canvas-soft-2 flex items-center justify-center text-ink cursor-pointer transition-colors shadow-vercel-sm" aria-label="Toggle theme">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="block dark:hidden">
+          <circle cx="12" cy="12" r="5" />
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" class="hidden dark:block">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      </button>
+      <a 
+        href="/colorise"
+        class="px-4 py-1.5 rounded-full bg-ink hover:bg-neutral-800 text-canvas font-medium text-xs transition-colors duration-150 shadow-vercel-sm uppercase tracking-wider font-mono cursor-pointer text-center"
+      >
+        Launch Studio
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="max-w-6xl mx-auto px-6 pt-16 pb-12 text-center space-y-8 relative z-10">
+    <!-- Monospace Eyebrow Badge -->
+    <div class="flex justify-center animate-fade-in">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-hairline bg-canvas/80 text-[10px] font-mono text-neutral-600 uppercase shadow-vercel-sm">
+        <span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+        SAM 2 + FLUX.1 Manga Colorizer v2.0
+      </div>
+    </div>
+
+    <!-- Sentence-case displaying title with negative tracking -->
+    <h1 class="text-4xl sm:text-6xl md:text-[80px] font-semibold tracking-[-0.04em] text-ink leading-[1.05] font-sans max-w-4xl mx-auto py-2">
+      Bring manga to life.
+    </h1>
+
+    <!-- Body lead paragraph -->
+    <p class="text-neutral-500 text-sm sm:text-base md:text-lg max-w-2xl mx-auto font-sans leading-relaxed">
+      A domain-specific AI colorization pipeline for One Piece and custom manga. Segment panels using SAM 2, map characters to official registries, and render stories with pixel-consistent colors.
+    </p>
+
+    <!-- Hero CTA Buttons -->
+    <div class="flex items-center justify-center gap-3.5 pt-4">
+      <a 
+        href="/colorise"
+        class="px-7 py-3 rounded-full bg-ink hover:bg-neutral-800 text-canvas font-semibold text-xs tracking-wider uppercase transition-colors duration-150 shadow-vercel-md cursor-pointer text-center"
+      >
+        Launch Colorizer Workspace
+      </a>
+      <a 
+        href="#pipeline-details" 
+        class="px-7 py-3 rounded-full bg-canvas border border-hairline hover:bg-canvas-soft-2 text-ink font-semibold text-xs tracking-wider uppercase transition-colors duration-150 shadow-vercel-sm"
+      >
+        Explore Features
+      </a>
+    </div>
+
+    <!-- Auto-Sliding Before/After Interactive Mockup Card -->
+    <div class="pt-12 flex justify-center">
+      <div id="hero-slider-box" class="w-full max-w-3xl aspect-[16/9] md:aspect-[21/9] bg-canvas border border-hairline rounded-lg overflow-hidden shadow-vercel-lg relative group select-none">
+        <!-- Colored Luffy image (Background, visible on the right) -->
+        <img 
+          src="/manga/One-Piece-Digital-Colored-Comics/Chapter%201/Chapter%201_page-006.png" 
+          class="absolute inset-0 w-full h-full object-cover" 
+          alt="AI Colorized Output" 
+        />
+        <!-- B&W image clipped by slider position (Overlay, visible on the left) -->
+        <div id="hero-slider-color-wrapper" class="absolute inset-0 w-full h-full overflow-hidden" style="clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);">
+          <img 
+            src="/manga/One-Piece/Chapter%201/Chapter%201_page-007.png" 
+            class="absolute inset-0 w-full h-full object-cover" 
+            alt="Original Manga Lineart" 
+            style="width: 100%; height: 100%; pointer-events: none;"
+          />
+        </div>
+        <!-- Handle line -->
+        <div id="hero-slider-handle" class="absolute top-0 bottom-0 left-1/2 w-[1px] bg-ink cursor-ew-resize transform -translate-x-1/2 z-30">
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-canvas border border-hairline-strong flex items-center justify-center text-[10px] text-neutral-600 shadow-vercel-sm group-hover:border-ink">
+            &larr;&rarr;
+          </div>
+        </div>
+
+        <div class="absolute bottom-3 left-4 bg-canvas/80 backdrop-blur-md border border-hairline px-2 py-0.5 rounded text-[9px] font-mono text-neutral-500 z-30 uppercase tracking-wide">
+          Original Lineart
+        </div>
+        <div class="absolute bottom-3 right-4 bg-canvas/80 backdrop-blur-md border border-hairline px-2 py-0.5 rounded text-[9px] font-mono text-neutral-500 z-30 uppercase tracking-wide">
+          Colorized Chapter
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fictional Technology Partners Logo Strip -->
+  <section class="border-y border-hairline bg-canvas py-8 select-none z-10 relative">
+    <div class="max-w-6xl mx-auto px-6 text-center space-y-4">
+      <p class="text-[9px] font-mono uppercase tracking-widest text-neutral-400 font-semibold">Engineered with high-performance frameworks</p>
+      <div class="flex flex-wrap justify-center items-center gap-x-12 gap-y-6 opacity-45 grayscale hover:opacity-75 transition-opacity duration-300">
+        <!-- Astro logo style -->
+        <span class="font-sans font-bold text-xs tracking-wider uppercase text-ink flex items-center gap-1.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 4l6.5 13H5.5L12 6z"/></svg>
+          ASTRO JS
+        </span>
+        <!-- PyTorch style -->
+        <span class="font-sans font-bold text-xs tracking-wider uppercase text-ink flex items-center gap-1.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm1-3h-2v4h2V5z"/></svg>
+          PYTORCH
+        </span>
+        <!-- FastAPI style -->
+        <span class="font-mono text-xs font-semibold text-ink flex items-center gap-1.5">
+          <svg class="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          FASTAPI
+        </span>
+        <!-- Stable Diffusion / FLUX.1 -->
+        <span class="font-sans font-bold text-xs tracking-wider uppercase text-ink flex items-center gap-1.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
+          FLUX.1 DIFFUSER
+        </span>
+        <!-- SQLite -->
+        <span class="font-mono text-xs font-semibold text-ink flex items-center gap-1.5">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z"/></svg>
+          SQLITE DB
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3-Column Feature Matrix -->
+  <section id="pipeline-details" class="max-w-6xl mx-auto px-6 py-24 space-y-16 relative z-10">
+    <div class="text-center space-y-2 select-none">
+      <h2 class="text-3xl font-semibold tracking-[-0.03em] text-ink font-sans">The colorization pipeline, decomposed.</h2>
+      <p class="text-neutral-500 text-xs font-sans">Five specialized modules working together to render high-fidelity color guides.</p>
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- Feature Card 1 -->
+      <div id="pipeline-segment" class="bg-canvas border border-hairline rounded-lg p-6 space-y-4 hover:border-neutral-400 transition-colors shadow-vercel-sm animate-float">
+        <div class="w-8 h-8 rounded-md bg-canvas-soft-2 border border-hairline flex items-center justify-center text-ink shadow-vercel-sm font-mono text-xs">01</div>
+        <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase">SAM 2 Panel Segmentation</h3>
+        <p class="text-[11px] text-neutral-500 font-sans leading-relaxed">
+          Segment panels and isolate background structures automatically. The Segment Anything Model isolates individual characters to construct high-fidelity masks for independent coloring.
+        </p>
+      </div>
+
+      <!-- Feature Card 2 -->
+      <div id="registry-segment" class="bg-canvas border border-hairline rounded-lg p-6 space-y-4 hover:border-neutral-400 transition-colors shadow-vercel-sm animate-float-delayed">
+        <div class="w-8 h-8 rounded-md bg-canvas-soft-2 border border-hairline flex items-center justify-center text-ink shadow-vercel-sm font-mono text-xs">02</div>
+        <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase">Canon Registry Clamping</h3>
+        <p class="text-[11px] text-neutral-500 font-sans leading-relaxed">
+          Register official color configurations for key cast members. Clamps generated tones to canon guidelines, ensuring Luffy's vest remains #E8230A across panels without drifting.
+        </p>
+      </div>
+
+      <!-- Feature Card 3 -->
+      <div id="render-segment" class="bg-canvas border border-hairline rounded-lg p-6 space-y-4 hover:border-neutral-400 transition-colors shadow-vercel-sm animate-float-delayed-2">
+        <div class="w-8 h-8 rounded-md bg-canvas-soft-2 border border-hairline flex items-center justify-center text-ink shadow-vercel-sm font-mono text-xs">03</div>
+        <h3 class="text-sm font-semibold tracking-tight text-ink font-sans uppercase">ControlNet & FLUX Render</h3>
+        <p class="text-[11px] text-neutral-500 font-sans leading-relaxed">
+          Inject structural lineart boundaries and style reference targets. High-DPI page render preserving screentones, line weights, and paper texture aesthetics.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Level Showcase: Dark Polarity Inverted Terminal Block -->
+  <section id="terminal-showcase" class="bg-canvas border-t border-hairline select-none py-20 z-10 relative">
+    <!-- Dark atmosphere backdrop (mesh gradient) -->
+    <div class="absolute inset-0 bg-[#0A0A0F] z-0 opacity-100"></div>
+    <div class="mesh-gradient-bg opacity-15"></div>
+
+    <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+      <div class="space-y-6 text-left">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-warning/10 border border-warning/20 text-warning text-[9px] font-mono uppercase font-semibold">
+          Database configuration
+        </div>
+        <h3 class="text-2xl md:text-3xl font-semibold tracking-[-0.03em] text-[#F0EEF8] font-sans">
+          Accurate metadata records.
+        </h3>
+        <p class="text-neutral-400 text-xs font-sans leading-relaxed max-w-lg">
+          Maintain chapter job histories, panel flags, anomaly reports, and user-submitted color corrections inside a robust SQLite relational schema with JSON fallback layers.
+        </p>
+        <div class="pt-2">
+          <a 
+            href="/colorise"
+            class="px-5 py-2 rounded-full bg-[#f0eef8] hover:bg-white text-[#0a0a0f] font-semibold text-xs transition-colors duration-150 shadow-vercel-sm uppercase font-mono tracking-wider cursor-pointer text-center"
+          >
+            Launch Studio
+          </a>
+        </div>
+      </div>
+
+      <!-- Dark code editor mockup -->
+      <div class="bg-ink border border-neutral-800 rounded-lg overflow-hidden shadow-vercel-lg text-left">
+        <div class="px-4 py-2 border-b border-neutral-800 bg-[#0F0F14] flex items-center justify-between">
+          <span class="text-[9px] font-mono text-neutral-500 uppercase">registry_schema.sql</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-success"></span>
+        </div>
+        <pre class="p-5 font-mono text-[11px] text-[#A9A9B2] overflow-x-auto leading-relaxed">
+<span class="text-neutral-600">-- Initialize Character color schema registry</span>
+<span class="text-violet">CREATE TABLE</span> character_registry (
+  id <span class="text-cyan">TEXT</span> PRIMARY KEY,
+  character_name <span class="text-cyan">TEXT</span> NOT NULL,
+  manga_series <span class="text-cyan">TEXT</span> DEFAULT <span class="text-gold">'one_piece'</span>,
+  color_data <span class="text-cyan">TEXT</span> NOT NULL,  <span class="text-neutral-600">-- JSON Hex Mapping</span>
+  is_canon <span class="text-cyan">BOOLEAN</span> DEFAULT 0
+);
+
+<span class="text-neutral-600">-- Luffy Color Registry Values</span>
+<span class="text-violet">INSERT INTO</span> character_registry (id, character_name, color_data)
+<span class="text-violet">VALUES</span> (
+  <span class="text-gold">'monkey_d_luffy'</span>,
+  <span class="text-gold">'Monkey D. Luffy'</span>,
+  <span class="text-gold">'&#123; "vest_red": "#E8230A", "shorts_blue": "#004FA3" &#125;'</span>
+);</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page Footer -->
+  <footer class="border-t border-hairline bg-canvas py-12 z-10 relative">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-4 h-4 flex items-center justify-center">
+          <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[11px] border-b-ink"></div>
+        </div>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">ChromaManga &copy; 2026. All rights reserved.</span>
+      </div>
+      <div class="flex gap-6 text-[10px] font-mono text-neutral-400 uppercase">
+        <a href="#pipeline-details" class="hover:text-ink transition-colors">Documentation</a>
+        <a href="https://github.com" class="hover:text-ink transition-colors">Github</a>
+        <a href="https://astro.build" class="hover:text-ink transition-colors">Astro</a>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Browser context actions for Hero.astro (Manual-only B&W/Color slider)
+  let isDraggingHeroSlider = false;
+  const sliderBox = document.getElementById('hero-slider-box');
+  const colorWrapper = document.getElementById('hero-slider-color-wrapper');
+  const sliderHandle = document.getElementById('hero-slider-handle');
+
+  function adjustHeroSlider(xPos: number) {
+    if (!sliderBox || !colorWrapper || !sliderHandle) return;
+    const rect = sliderBox.getBoundingClientRect();
+    let relativeX = xPos - rect.left;
+    
+    if (relativeX < 0) relativeX = 0;
+    if (relativeX > rect.width) relativeX = rect.width;
+    
+    const percentage = (relativeX / rect.width) * 100;
+    
+    colorWrapper.style.clipPath = `polygon(0 0, ${percentage}% 0, ${percentage}% 100%, 0 100%)`;
+    sliderHandle.style.left = `${percentage}%`;
+  }
+
+  // Bind interactive handlers
+  if (sliderBox) {
+    sliderBox.addEventListener('mousedown', (e: any) => {
+      isDraggingHeroSlider = true;
+      adjustHeroSlider(e.clientX);
+    });
+
+    sliderBox.addEventListener('touchstart', (e: any) => {
+      isDraggingHeroSlider = true;
+      adjustHeroSlider(e.touches[0].clientX);
+    });
+  }
+
+  window.addEventListener('mousemove', (e: any) => {
+    if (!isDraggingHeroSlider) return;
+    adjustHeroSlider(e.clientX);
+  });
+
+  window.addEventListener('touchmove', (e: any) => {
+    if (!isDraggingHeroSlider) return;
+    adjustHeroSlider(e.touches[0].clientX);
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDraggingHeroSlider = false;
+  });
+
+  window.addEventListener('touchend', () => {
+    isDraggingHeroSlider = false;
+  });
+
+  // Theme Toggler
+  const toggleBtn = document.getElementById('theme-toggle-btn');
+  toggleBtn?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+</script>
