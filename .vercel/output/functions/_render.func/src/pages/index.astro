@@ -1,0 +1,375 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Panel — Read Manga, Beautifully">
+  <Nav />
+
+  <main class="flex-1 w-full">
+    <!-- ==================== HERO ==================== -->
+    <section class="relative overflow-hidden border-b border-hairline bg-canvas theme-transition">
+      <div class="mesh-gradient pointer-events-none absolute inset-0 opacity-60 dark:opacity-80" />
+      <div class="pointer-events-none absolute -inset-x-20 -top-40 h-[500px] bg-gradient-to-b from-accent/5 via-transparent to-transparent blur-3xl" />
+
+      <div class="relative mx-auto max-w-7xl px-4 pb-32 pt-24 sm:px-6 md:pb-40 md:pt-32">
+        <div class="grid gap-12 lg:grid-cols-[1fr_400px] lg:gap-16 xl:gap-20">
+          <div class="flex flex-col justify-center">
+            <h1 class="mt-6 animate-fade-up-d1 text-balance text-4xl font-semibold leading-[1.08] tracking-[-0.04em] md:text-5xl lg:text-6xl">
+              Read manga.<br />
+              <span class="text-body">Anywhere.</span>
+            </h1>
+            <p class="mt-5 animate-fade-up-d2 max-w-lg text-[17px] leading-relaxed text-body">
+              A clean, focused reading experience. Browse thousands of manga,
+              manhwa, and manhua — no account needed.
+            </p>
+            <div class="mt-8 animate-fade-up-d3 flex flex-wrap items-center gap-3">
+              <a href="/search" class="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-medium text-canvas transition-all hover:opacity-90 active:scale-[0.97]">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                Browse all manga
+              </a>
+              <button id="hero-search" class="inline-flex h-11 items-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-sm font-medium text-ink transition-all hover:bg-canvas-soft active:scale-[0.97]">
+                Quick search
+                <kbd class="rounded border border-hairline px-1.5 py-0.5 text-[10px] font-mono text-mute">⌘K</kbd>
+              </button>
+            </div>
+          </div>
+
+          <div class="relative hidden lg:flex items-center justify-center min-h-[420px] w-full max-w-[480px]">
+            <div id="hero-covers-stack" class="relative w-full h-[360px]">
+              <div class="absolute left-[10px] top-[60px] w-40 h-60 rotate-[-4deg] z-10 animate-float shadow-vercel-md border border-hairline skeleton rounded-xl" />
+              <div class="absolute left-[160px] top-[15px] w-44 h-66 rotate-[2deg] z-20 animate-float-d2 shadow-vercel-lg border border-hairline skeleton rounded-xl" />
+              <div class="absolute left-[310px] top-[70px] w-40 h-60 rotate-[-2deg] z-10 animate-float-d4 shadow-vercel-md border border-hairline skeleton rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HOT UPDATES ==================== -->
+    <section id="hot-updates" class="border-b border-hairline bg-canvas px-4 py-16 sm:px-6 md:py-20 theme-transition">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-8 reveal flex items-center justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-[10px] font-mono text-body shadow-vercel-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-error/70" />
+              TRENDING NOW
+            </span>
+            <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Hot updates</h2>
+          </div>
+          <a href="/search" class="hidden items-center gap-1 text-sm text-link transition-colors hover:text-link-deep sm:flex">
+            View all
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+          </a>
+        </div>
+        <div id="hot-updates-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 max-w-[1000px] mx-auto">
+          {[1,2,3,4,5,6,7,8,9,10].map(i => (
+            <div class="animate-fade-up overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm max-w-[190px] w-full mx-auto">
+              <div class="skeleton aspect-[3/4] w-full"></div>
+              <div class="space-y-2 p-3">
+                <div class="skeleton h-3 w-full"></div>
+                <div class="skeleton h-2 w-2/3"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== LATEST UPDATES ==================== -->
+    <section class="border-b border-hairline bg-canvas-soft px-4 py-16 sm:px-6 md:py-20 theme-transition">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-8 reveal flex items-center justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas px-3 py-1 text-[10px] font-mono text-body shadow-vercel-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-accent/70" />
+              RECENT RELEASES
+            </span>
+            <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Latest updates</h2>
+          </div>
+        </div>
+        <div id="latest-updates-list" class="space-y-1.5">
+          {[1,2,3,4,5,6,7,8].map(i => (
+            <div class="animate-fade-up flex items-center gap-4 rounded-xl border border-hairline bg-canvas p-4 shadow-vercel-sm">
+              <div class="skeleton h-14 w-10 shrink-0 rounded-lg sm:h-16 sm:w-12"></div>
+              <div class="flex-1 space-y-2">
+                <div class="skeleton h-4 w-48"></div>
+                <div class="skeleton h-3 w-32"></div>
+              </div>
+              <div class="skeleton h-3 w-20 shrink-0"></div>
+            </div>
+          ))}
+        </div>
+        <div id="latest-updates-more-container" class="mt-6 flex justify-center hidden">
+          <button id="btn-show-more-latest" class="inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-sm font-medium text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer">
+            <span>Show more updates</span>
+            <svg class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HOT SERIES ==================== -->
+    <section class="border-b border-hairline bg-canvas px-4 py-16 sm:px-6 md:py-20 theme-transition">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-8 reveal flex items-center justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-[10px] font-mono text-body shadow-vercel-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-warning/70" />
+              POPULAR
+            </span>
+            <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Hot series</h2>
+          </div>
+        </div>
+        <div id="hot-series-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {[1,2,3,4,5,6,7,8,9,10].map(i => (
+            <div class="animate-fade-up overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm">
+              <div class="skeleton aspect-[3/4] w-full"></div>
+              <div class="space-y-2 p-3">
+                <div class="skeleton h-3 w-full"></div>
+                <div class="skeleton h-2 w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section class="bg-canvas-soft-2 px-4 py-20 text-ink sm:px-6 md:py-28 border-t border-hairline theme-transition">
+      <div class="mx-auto max-w-2xl text-center">
+        <h2 class="text-balance text-3xl font-semibold tracking-[-0.03em] md:text-4xl">Start reading now.</h2>
+        <p class="mx-auto mt-4 max-w-md text-[15px] text-body">No account. No paywalls. Just manga.</p>
+        <a href="/search" class="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-medium text-canvas transition-all hover:opacity-90 active:scale-[0.97]">
+          Explore the library
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+        </a>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+</Layout>
+
+<script>
+  document.getElementById('hero-search')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('open-search'));
+  });
+
+  async function loadHomepage() {
+    try {
+      const res = await fetch('/api/home');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+
+      // Setup hero covers staggered carousel
+      const stackContainer = document.getElementById('hero-covers-stack');
+      const items = (data.recommendations || []).slice(0, 10);
+      if (items.length === 0 && data.hotUpdates?.length) {
+        items.push(...data.hotUpdates.slice(0, 10).map(u => ({
+          id: u.seriesId,
+          title: u.seriesTitle,
+          image: u.cover,
+          slug: u.seriesSlug
+        })));
+      }
+
+      if (stackContainer && items.length >= 3) {
+        stackContainer.innerHTML = '';
+
+        const cardConfigs = [
+          { classes: 'absolute left-[10px] top-[60px] w-40 h-60 rotate-[-4deg] z-10 animate-float', initialIndex: 0 },
+          { classes: 'absolute left-[160px] top-[15px] w-44 h-66 rotate-[2deg] z-20 animate-float-d2', initialIndex: 1 },
+          { classes: 'absolute left-[310px] top-[70px] w-40 h-60 rotate-[-2deg] z-10 animate-float-d4', initialIndex: 2 }
+        ];
+
+        const cardEls = cardConfigs.map((config, i) => {
+          const card = document.createElement('a');
+          card.href = `/series/${items[config.initialIndex].id}`;
+          card.className = `${config.classes} rounded-xl border border-hairline shadow-vercel-md overflow-hidden group transition-all duration-500 ease-in-out hover:rotate-0 hover:-translate-y-2 hover:scale-105 skeleton`;
+          
+          const img = document.createElement('img');
+          img.src = items[config.initialIndex].image;
+          img.alt = items[config.initialIndex].title;
+          img.className = 'w-full h-full object-cover transition-opacity duration-500 opacity-0';
+          img.loading = 'lazy';
+          img.onload = () => {
+            img.classList.remove('opacity-0');
+            card.classList.remove('skeleton');
+          };
+          img.onerror = () => {
+            img.style.display = 'none';
+            card.classList.remove('skeleton', 'animate-pulse');
+            card.innerHTML = `<div class="flex h-full flex-col items-center justify-center p-4 text-center bg-canvas-soft text-mute"><span class="text-xs font-semibold line-clamp-3">${items[config.initialIndex].title}</span></div>`;
+          };
+          
+          card.appendChild(img);
+          stackContainer.appendChild(card);
+          return { card, img };
+        });
+
+        let cycleCardIdx = 0;
+        let nextItemIdx = 3;
+
+        setInterval(() => {
+          if (items.length <= 3) return;
+          
+          const targetCard = cardEls[cycleCardIdx];
+          const nextItem = items[nextItemIdx];
+          
+          targetCard.card.style.opacity = '0';
+          targetCard.card.style.transform = `${targetCard.card.style.transform} scale(0.9) translateY(10px)`;
+          
+          setTimeout(() => {
+            targetCard.card.href = `/series/${nextItem.id}`;
+            targetCard.card.classList.add('skeleton');
+            targetCard.img.classList.add('opacity-0');
+            targetCard.img.src = nextItem.image;
+            targetCard.img.alt = nextItem.title;
+            targetCard.img.onload = () => {
+              targetCard.img.classList.remove('opacity-0');
+              targetCard.card.classList.remove('skeleton');
+            };
+            targetCard.img.onerror = () => {
+              targetCard.img.style.display = 'none';
+              targetCard.card.classList.remove('skeleton', 'animate-pulse');
+              targetCard.card.innerHTML = `<div class="flex h-full flex-col items-center justify-center p-4 text-center bg-canvas-soft text-mute"><span class="text-xs font-semibold line-clamp-3">${nextItem.title}</span></div>`;
+            };
+            
+            setTimeout(() => {
+              targetCard.card.style.opacity = '1';
+              targetCard.card.style.transform = '';
+            }, 50);
+          }, 500);
+
+          cycleCardIdx = (cycleCardIdx + 1) % 3;
+          nextItemIdx = (nextItemIdx + 1) % items.length;
+          if (nextItemIdx < 3) nextItemIdx = 3;
+        }, 4000);
+      }
+
+      const hotGrid = document.getElementById('hot-updates-grid');
+      if (hotGrid && data.hotUpdates?.length) {
+        hotGrid.innerHTML = data.hotUpdates.slice(0, 10).map((u, i) => {
+          const cleanChapter = (u.chapterTitle || '').replace(u.seriesTitle, '').trim() || u.chapterTitle;
+          return `<a href="/read/${u.chapterId}" class="group animate-fade-up-d${i % 7} overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover hover:shadow-vercel-md max-w-[190px] w-full mx-auto">
+            <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+              <img src="${u.cover}" alt="${u.seriesTitle}" class="h-full w-full object-contain transition-all duration-500 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-mute text-xs\\'>No cover</div>'" />
+              
+              <!-- Default Overlay (Legible in light and dark mode) -->
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-8 transition-opacity duration-300 group-hover:opacity-0">
+                <p class="text-xs font-semibold leading-tight text-white line-clamp-1">${u.seriesTitle}</p>
+                <p class="mt-0.5 text-[10px] text-white/80">${cleanChapter}</p>
+              </div>
+              
+              <!-- Hover Overlay (Animated dark pane) -->
+              <div class="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-3 transition-all duration-300 translate-y-2 group-hover:translate-y-0 backdrop-blur-[1.5px] pointer-events-none">
+                <p class="text-xs font-semibold leading-tight text-white line-clamp-2">${u.seriesTitle}</p>
+                <p class="mt-1.5 text-[10px] font-medium text-white/85">${cleanChapter}</p>
+              </div>
+            </div>
+          </a>`;
+        }).join('');
+      }
+
+      const latestList = document.getElementById('latest-updates-list');
+      const moreContainer = document.getElementById('latest-updates-more-container');
+      const moreBtn = document.getElementById('btn-show-more-latest');
+      let latestUpdates = data.latestUpdates || [];
+      let isLatestExpanded = false;
+
+      function renderLatestUpdates() {
+        if (!latestList) return;
+        const visibleUpdates = isLatestExpanded ? latestUpdates.slice(0, 20) : latestUpdates.slice(0, 8);
+        latestList.innerHTML = visibleUpdates.map((u, i) =>
+          `<a href="/read/${u.chapterId}" class="reveal group flex items-center gap-3 sm:gap-4 rounded-xl border border-hairline bg-canvas p-3 sm:p-4 shadow-vercel-sm card-hover hover:shadow-vercel-md">
+            <div class="h-14 w-10 sm:h-16 sm:w-12 shrink-0 overflow-hidden rounded-lg border border-hairline bg-canvas-soft-2">
+              <img src="${u.cover}" alt="${u.seriesTitle}" class="h-full w-full object-cover transition-all duration-300 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-[10px] text-mute\\'>N/A</div>'" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-ink truncate">${u.seriesTitle}</p>
+              <p class="mt-0.5 text-xs text-body truncate">${u.chapterTitle}</p>
+            </div>
+            ${u.date ? `<span class="shrink-0 text-[11px] font-mono text-mute">${timeAgo(u.date)}</span>` : ''}
+            <svg class="h-4 w-4 shrink-0 text-mute transition-all group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+          </a>`
+        ).join('');
+
+        if (latestUpdates.length > 8) {
+          moreContainer?.classList.remove('hidden');
+          if (moreBtn) {
+            const btnSpan = moreBtn.querySelector('span');
+            const btnIcon = moreBtn.querySelector('svg');
+            if (btnSpan && btnIcon) {
+              if (isLatestExpanded) {
+                btnSpan.textContent = 'Show less updates';
+                btnIcon.classList.add('rotate-180');
+              } else {
+                btnSpan.textContent = 'Show more updates';
+                btnIcon.classList.remove('rotate-180');
+              }
+            }
+          }
+        } else {
+          moreContainer?.classList.add('hidden');
+        }
+
+        setTimeout(observeReveals, 100);
+      }
+
+      if (latestList && latestUpdates.length) {
+        renderLatestUpdates();
+        moreBtn?.addEventListener('click', () => {
+          isLatestExpanded = !isLatestExpanded;
+          renderLatestUpdates();
+        });
+      }
+
+      const seriesGrid = document.getElementById('hot-series-grid');
+      if (seriesGrid && data.hotSeries?.length) {
+        seriesGrid.innerHTML = data.hotSeries.slice(0, 20).map((s, i) =>
+          `<a href="/series/${s.id}" class="group animate-fade-up-d${i % 7} overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover hover:shadow-vercel-md max-w-[190px] w-full mx-auto">
+            <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+              <img src="https://temp.compsci88.com/cover/fallback/${s.id}.jpg" alt="${s.title}" class="h-full w-full object-contain transition-all duration-500 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-xs text-mute\\'>${s.title[0]}</div>'" />
+            </div>
+            <div class="p-3">
+              <h3 class="text-sm font-semibold leading-tight tracking-tight text-ink line-clamp-2">${s.title}</h3>
+            </div>
+          </a>`
+        ).join('');
+      }
+
+    } catch (e) {
+      document.querySelectorAll('#hot-updates-grid, #latest-updates-list, #hot-series-grid').forEach(el => {
+        if (el) el.innerHTML = '<div class="col-span-full py-16 text-center text-sm text-mute">Could not load content.</div>';
+      });
+    }
+  }
+
+  function timeAgo(d) {
+    if (!d) return '';
+    const diff = Date.now() - new Date(d).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'now';
+    if (m < 60) return m + 'm';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h';
+    const days = Math.floor(h / 24);
+    if (days < 7) return days + 'd';
+    return new Date(d).toLocaleDateString();
+  }
+
+  let observer;
+  function observeReveals() {
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); observer.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal:not(.revealed)').forEach(el => observer.observe(el));
+  }
+
+  document.addEventListener('DOMContentLoaded', observeReveals);
+  setTimeout(observeReveals, 500);
+  loadHomepage();
+</script>
