@@ -262,6 +262,7 @@ const { id } = Astro.params;
   let pages: string[] = [];
   let currentPage = 0;
   let activePageIdx = 0;
+  let currentSeriesId = '';
   let readerMode = localStorage.getItem('reader-mode') || 'long';
   if (readerMode !== 'single' && readerMode !== 'long' && readerMode !== 'strip') {
     readerMode = 'long';
@@ -350,6 +351,7 @@ const { id } = Astro.params;
           if (readerMode !== 'single') {
             if (pageIndicator) pageIndicator.textContent = `${activePageIdx + 1} / ${pages.length}`;
             updateNextPrevBtnStates();
+            checkCompletion();
           }
         }
       });
@@ -440,6 +442,7 @@ const { id } = Astro.params;
       
       if (pageIndicator) pageIndicator.textContent = `${currentPage + 1} / ${pages.length}`;
       updateNextPrevBtnStates();
+      checkCompletion();
     } else {
       pageImages.forEach(img => {
         const wrapper = img.parentElement;
@@ -463,6 +466,42 @@ const { id } = Astro.params;
     }
     if (nextBtn) {
       (nextBtn as HTMLButtonElement).disabled = !hasNext;
+    }
+  }
+
+  // ─── COMPLETION TRACKING ───
+  function markChapterComplete() {
+    if (!currentSeriesId) return;
+
+    try {
+      // 1. Mark in history as completed
+      let history = JSON.parse(localStorage.getItem('manga-reading-history') || '[]');
+      const item = history.find((h: any) => h.seriesId === currentSeriesId);
+      if (item && item.lastChapterId === chapterId) {
+        if (!item.completed) {
+          item.completed = true;
+          localStorage.setItem('manga-reading-history', JSON.stringify(history));
+          showToast('Chapter completed!');
+        }
+      }
+
+      // 2. Mark this chapter as read (tick mark) in local storage
+      const readKey = 'read-ch-' + currentSeriesId;
+      let readList = JSON.parse(localStorage.getItem(readKey) || '[]');
+      if (!readList.includes(chapterId)) {
+        readList.push(chapterId);
+        localStorage.setItem(readKey, JSON.stringify(readList));
+      }
+    } catch (err) {
+      console.error('Failed to mark chapter as complete:', err);
+    }
+  }
+
+  function checkCompletion() {
+    if (pages.length === 0) return;
+    const isLastPage = readerMode === 'single' ? currentPage === pages.length - 1 : activePageIdx === pages.length - 1;
+    if (isLastPage) {
+      markChapterComplete();
     }
   }
 
@@ -533,6 +572,7 @@ const { id } = Astro.params;
 
       // Save progress to localStorage
       const seriesId = data.seriesId;
+      currentSeriesId = seriesId;
       if (seriesId) {
         if (backToSeriesBtn) {
           backToSeriesBtn.href = `/series/${seriesId}`;
@@ -547,18 +587,11 @@ const { id } = Astro.params;
             cover: `https://temp.compsci88.com/cover/fallback/${seriesId}.jpg`,
             lastChapterId: chapterId,
             lastChapterTitle: data.chapterTitle || `Chapter ${chapterId}`,
+            completed: false,
             timestamp: Date.now()
           });
           if (history.length > 20) history.pop();
           localStorage.setItem('manga-reading-history', JSON.stringify(history));
-
-          // 2. Mark this chapter as read (tick mark)
-          const readKey = 'read-ch-' + seriesId;
-          let readList = JSON.parse(localStorage.getItem(readKey) || '[]');
-          if (!readList.includes(chapterId)) {
-            readList.push(chapterId);
-            localStorage.setItem(readKey, JSON.stringify(readList));
-          }
         } catch (err) {
           console.error('Failed to save reading progress:', err);
         }
