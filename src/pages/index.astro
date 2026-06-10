@@ -74,6 +74,10 @@ import Footer from '../components/Footer.astro';
             </span>
             <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Hot series</h2>
           </div>
+          <a href="/popular" class="flex items-center gap-1 text-sm text-link transition-colors hover:text-link-deep">
+            View all
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+          </a>
         </div>
         <div id="hot-series-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {[1,2,3,4,5,6,7,8,9,10].map(i => (

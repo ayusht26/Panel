@@ -19,6 +19,8 @@ export interface SeriesDetail extends SeriesResult {
   authors: string[];
   tags: string[];
   chapters: ChapterInfo[];
+  firstChapter?: { id: string; title: string };
+  latestChapter?: { id: string; title: string };
 }
 
 export interface ChapterInfo {
@@ -333,6 +335,26 @@ export async function getSeriesDetail(id: string): Promise<SeriesDetail> {
 
   const chapters: ChapterInfo[] = [];
 
+  const firstAndLatestChapters: { id: string; title: string }[] = [];
+  const $ = cheerio.load(html);
+  $('a[href*="/chapters/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const m = href.match(/\/chapters\/([^/]+)/);
+    const chId = m ? m[1] : '';
+    if (!chId) return;
+
+    const text = $(el).clone().find('span, svg, time, button').remove().end().text().trim().replace(/\s+/g, ' ');
+    if (text) {
+      const cleanTitle = text.split('Last Read')[0].trim();
+      if (cleanTitle && !firstAndLatestChapters.some(c => c.id === chId)) {
+        firstAndLatestChapters.push({ id: chId, title: cleanTitle });
+      }
+    }
+  });
+
+  const latestChapter = firstAndLatestChapters[0];
+  const firstChapter = firstAndLatestChapters[firstAndLatestChapters.length - 1];
+
   return {
     id,
     title,
@@ -340,6 +362,8 @@ export async function getSeriesDetail(id: string): Promise<SeriesDetail> {
     image: coverImg,
     altTitles, description, authors, tags,
     type, year, status, chapters,
+    firstChapter,
+    latestChapter,
   };
 }
 
@@ -482,4 +506,24 @@ export function getCoverUrl(id: string): string {
 
 export function cleanMangaTitle(title: string): string {
   return title.replace(/\s+cover$/i, '').trim();
+}
+
+export async function getPopularSeries(sort = 'monthly_views'): Promise<HotSeriesItem[]> {
+  const hotSeries: HotSeriesItem[] = [];
+  try {
+    const hotHtml = await fetchHTML(`${BASE}/hot-series?sort=${sort}`);
+    const $hot = cheerio.load(hotHtml);
+    $hot('a[href*="/series/"]').each((_, el) => {
+      const href = $hot(el).attr('href') || '';
+      const id = extractSeriesId(href);
+      if (!id) return;
+      const title = $hot(el).text().trim();
+      if (title && !hotSeries.some(s => s.id === id)) {
+        hotSeries.push({ id, title, slug: href.split('/').pop() || '' });
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching popular series:', err);
+  }
+  return hotSeries;
 }

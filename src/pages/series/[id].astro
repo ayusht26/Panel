@@ -201,6 +201,7 @@ const { id } = Astro.params;
       if (!res.ok) throw new Error('Not found');
       const s = await res.json();
       document.title = s.title;
+      seriesDetail = s; // Store it globally in script scope
 
       const tags = (s.tags || []).slice(0, 5);
 
@@ -313,6 +314,9 @@ const { id } = Astro.params;
         `;
       }
 
+      // Update action buttons immediately from metadata
+      updateActionButtons();
+
       // Hook up cover click event to open lightbox
       const coverContainer = document.getElementById('cover-container');
       coverContainer?.addEventListener('click', () => {
@@ -405,6 +409,7 @@ const { id } = Astro.params;
   }
 
   // Chapter variables
+  let seriesDetail: any = null;
   let currentSort = 'desc';
   let currentSearch = '';
   let allChapters: any[] = [];
@@ -435,11 +440,16 @@ const { id } = Astro.params;
 
   function updateActionButtons() {
     const quickActions = document.getElementById('quick-actions');
-    if (!quickActions || allChapters.length === 0) return;
+    if (!quickActions) return;
 
     // Check if there is history for this series
     const history = JSON.parse(localStorage.getItem('manga-reading-history') || '[]');
     const seriesHistory = history.find((h: any) => h.seriesId === seriesId);
+
+    const startCh = allChapters.length > 0 ? allChapters[allChapters.length - 1] : seriesDetail?.firstChapter;
+    const latestCh = allChapters.length > 0 ? allChapters[0] : seriesDetail?.latestChapter;
+
+    if (!startCh || !latestCh) return;
 
     let continueBtnHtml = '';
     let startBtnClass = '';
@@ -448,30 +458,58 @@ const { id } = Astro.params;
     if (seriesHistory) {
       // Find next chapter to read
       const lastReadId = seriesHistory.lastChapterId;
-      const idx = allChapters.findIndex((c: any) => c.id === lastReadId);
+      const idx = allChapters.length > 0 ? allChapters.findIndex((c: any) => c.id === lastReadId) : -1;
       const completed = seriesHistory.completed ?? false;
       
       let nextChId = lastReadId;
       let nextChTitle = seriesHistory.lastChapterTitle;
       let isLatestRead = false;
+      let isLoadingNext = false;
 
       if (completed) {
-        if (idx !== -1 && idx > 0) {
-          nextChId = allChapters[idx - 1].id;
-          nextChTitle = allChapters[idx - 1].title || `Chapter ${allChapters[idx - 1].chapter}`;
+        if (allChapters.length > 0) {
+          if (idx !== -1 && idx > 0) {
+            nextChId = allChapters[idx - 1].id;
+            nextChTitle = allChapters[idx - 1].title || `Chapter ${allChapters[idx - 1].chapter}`;
+          } else {
+            isLatestRead = true;
+          }
         } else {
-          isLatestRead = true;
+          // Try to get from sessionStorage sequence
+          const seqStr = sessionStorage.getItem('ch-seq-' + seriesId);
+          if (seqStr) {
+            try {
+              const seq = JSON.parse(seqStr);
+              const sIdx = seq.indexOf(lastReadId);
+              if (sIdx !== -1 && sIdx > 0) {
+                nextChId = seq[sIdx - 1];
+                nextChTitle = "Next Chapter";
+              } else {
+                isLatestRead = true;
+              }
+            } catch (e) {
+              isLoadingNext = true;
+            }
+          } else {
+            isLoadingNext = true;
+          }
         }
       }
 
-      continueBtnHtml = `
-        <a href="/read/${nextChId}" class="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-6 text-xs font-semibold text-canvas transition-all hover:opacity-90 active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up">
-          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-          </svg>
-          ${isLatestRead ? `Re-read Latest (${nextChTitle})` : (completed ? `Continue: ${nextChTitle}` : `Resume: ${nextChTitle}`)}
-        </a>
-      `;
+      if (isLoadingNext) {
+        continueBtnHtml = `
+          <div class="h-10 w-40 rounded-full bg-canvas-soft-2 border border-hairline skeleton shadow-vercel-sm animate-fade-up"></div>
+        `;
+      } else {
+        continueBtnHtml = `
+          <a href="/read/${nextChId}" class="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-6 text-xs font-semibold text-canvas transition-all hover:opacity-90 active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+            </svg>
+            ${isLatestRead ? `Re-read Latest (${nextChTitle})` : (completed ? `Continue: ${nextChTitle}` : `Resume: ${nextChTitle}`)}
+          </a>
+        `;
+      }
 
       startBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-xs font-semibold text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up-d1';
       latestBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-xs font-semibold text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up-d2';
@@ -479,9 +517,6 @@ const { id } = Astro.params;
       startBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-6 text-xs font-semibold text-canvas transition-all hover:opacity-90 active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up';
       latestBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-xs font-semibold text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up-d1';
     }
-
-    const startCh = allChapters[allChapters.length - 1];
-    const latestCh = allChapters[0];
 
     quickActions.innerHTML = `
       ${continueBtnHtml}
