@@ -13,7 +13,7 @@ const { id } = Astro.params;
     <div id="reader-bar" class="fixed top-0 right-0 left-0 z-50 flex h-14 items-center justify-between border-b border-hairline bg-canvas/80 px-3 sm:px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-canvas/70 select-none transition-all duration-300">
       <!-- Left: Back & Title -->
       <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
-        <a href="javascript:history.back()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-canvas-soft text-ink" title="Back">
+        <a id="back-to-series-btn" href="/" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-canvas-soft text-ink" title="Back to series">
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
           </svg>
@@ -221,6 +221,43 @@ const { id } = Astro.params;
 
   const prevChapterBtn = document.getElementById('prev-chapter-btn') as HTMLAnchorElement;
   const nextChapterBtn = document.getElementById('next-chapter-btn') as HTMLAnchorElement;
+  const backToSeriesBtn = document.getElementById('back-to-series-btn') as HTMLAnchorElement;
+
+  // Try to determine the seriesId synchronously from sessionStorage or localStorage to prevent any delay on back clicks
+  let detectedSeriesId = '';
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith('ch-seq-')) {
+        const val = sessionStorage.getItem(key);
+        if (val) {
+          const seq = JSON.parse(val);
+          if (Array.isArray(seq) && seq.includes(chapterId)) {
+            detectedSeriesId = key.replace('ch-seq-', '');
+            break;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to parse sessionStorage keys:', err);
+  }
+
+  if (!detectedSeriesId) {
+    try {
+      const history = JSON.parse(localStorage.getItem('manga-reading-history') || '[]');
+      const found = history.find((h: any) => h.lastChapterId === chapterId);
+      if (found) {
+        detectedSeriesId = found.seriesId;
+      }
+    } catch (err) {
+      console.error('Failed to parse localStorage history:', err);
+    }
+  }
+
+  if (backToSeriesBtn && detectedSeriesId) {
+    backToSeriesBtn.href = `/series/${detectedSeriesId}`;
+  }
 
   let pages: string[] = [];
   let currentPage = 0;
@@ -493,6 +530,39 @@ const { id } = Astro.params;
         chapterTitle.textContent = data.chapterTitle || `Chapter`;
       }
       document.title = `Reading - ${data.chapterTitle || 'Chapter'}`;
+
+      // Save progress to localStorage
+      const seriesId = data.seriesId;
+      if (seriesId) {
+        if (backToSeriesBtn) {
+          backToSeriesBtn.href = `/series/${seriesId}`;
+        }
+        try {
+          // 1. Save to Continue Reading history
+          let history = JSON.parse(localStorage.getItem('manga-reading-history') || '[]');
+          history = history.filter((h: any) => h.seriesId !== seriesId);
+          history.unshift({
+            seriesId: seriesId,
+            seriesTitle: data.seriesTitle || 'Manga',
+            cover: `https://temp.compsci88.com/cover/fallback/${seriesId}.jpg`,
+            lastChapterId: chapterId,
+            lastChapterTitle: data.chapterTitle || `Chapter ${chapterId}`,
+            timestamp: Date.now()
+          });
+          if (history.length > 20) history.pop();
+          localStorage.setItem('manga-reading-history', JSON.stringify(history));
+
+          // 2. Mark this chapter as read (tick mark)
+          const readKey = 'read-ch-' + seriesId;
+          let readList = JSON.parse(localStorage.getItem(readKey) || '[]');
+          if (!readList.includes(chapterId)) {
+            readList.push(chapterId);
+            localStorage.setItem(readKey, JSON.stringify(readList));
+          }
+        } catch (err) {
+          console.error('Failed to save reading progress:', err);
+        }
+      }
 
       if (prevChapterBtn && nextChapterBtn) {
         const seriesId = data.seriesId;

@@ -196,12 +196,26 @@ const { id } = Astro.params;
 
   async function loadSeries() {
     try {
+      // Fetch metadata only for snappy load
       const res = await fetch(`/api/series/${seriesId}`);
       if (!res.ok) throw new Error('Not found');
       const s = await res.json();
       document.title = s.title;
 
       const tags = (s.tags || []).slice(0, 5);
+
+      // Determine skeletal placeholder state synchronously based on local history
+      const history = JSON.parse(localStorage.getItem('manga-reading-history') || '[]');
+      const seriesHistory = history.find((h: any) => h.seriesId === seriesId);
+      
+      const skeletonsHtml = seriesHistory ? `
+        <div class="h-10 w-40 rounded-full bg-canvas-soft-2 border border-hairline skeleton shadow-vercel-sm animate-fade-up"></div>
+        <div class="h-10 w-28 rounded-full bg-canvas-soft-2 border border-hairline skeleton shadow-vercel-sm animate-fade-up-d1"></div>
+        <div class="h-10 w-28 rounded-full bg-canvas-soft-2 border border-hairline skeleton shadow-vercel-sm animate-fade-up-d2"></div>
+      ` : `
+        <div class="h-10 w-28 rounded-full bg-canvas-soft-2 border border-hairline skeleton shadow-vercel-sm animate-fade-up"></div>
+        <div class="h-10 w-28 rounded-full bg-canvas-soft-2 border border-hairline skeleton shadow-vercel-sm animate-fade-up-d1"></div>
+      `;
 
       if (container) {
         container.innerHTML = `
@@ -229,8 +243,13 @@ const { id } = Astro.params;
                 </div>
               ` : ''}
 
+              <!-- Quick Action CTAs row -->
+              <div id="quick-actions" class="mt-6 flex flex-wrap gap-3">
+                ${skeletonsHtml}
+              </div>
+
               ${s.authors && s.authors.length > 0 ? `
-                <p class="mt-4 text-sm text-body">
+                <p class="mt-6 text-sm text-body">
                   <span class="font-medium text-ink">Author${s.authors.length > 1 ? 's' : ''}:</span> ${s.authors.join(', ')}
                 </p>
               ` : ''}
@@ -251,7 +270,7 @@ const { id } = Astro.params;
                   <svg class="h-8 w-8 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
                   </svg>
-                  <p class="text-sm text-mute">Chapter list not loaded</p>
+                  <p id="chapters-placeholder-text" class="text-sm text-mute">Chapter list not loaded</p>
                   <button id="load-chapters-btn" class="inline-flex h-9 items-center gap-2 rounded-full bg-ink px-4 text-xs font-medium text-canvas transition-all hover:opacity-90 cursor-pointer">
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
@@ -260,7 +279,7 @@ const { id } = Astro.params;
                   </button>
                   <div id="chapters-loading" class="hidden">
                     <div class="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-hairline-strong border-t-ink"></div>
-                    <p class="mt-2 text-xs text-mute">Fetching chapter list...</p>
+                    <p class="mt-2 text-xs text-mute font-mono">Fetching chapter list...</p>
                   </div>
                 </div>
 
@@ -300,138 +319,79 @@ const { id } = Astro.params;
         openLightbox(s.image, s.title);
       });
 
-      // Chapter loading and rendering
+      // Hook up manual chapters loading button click
+      const loadBtn = document.getElementById('load-chapters-btn');
       const chaptersPlaceholder = document.getElementById('chapters-placeholder');
       const chaptersUi = document.getElementById('chapters-ui');
-      const chaptersHeading = document.getElementById('chapters-heading');
-      const chaptersContainer = document.getElementById('chapters-list');
-      const loadChaptersBtn = document.getElementById('load-chapters-btn');
       const chaptersLoading = document.getElementById('chapters-loading');
-      const chaptersHeadingContainer = chaptersHeading?.closest('h2');
+      const chaptersHeading = document.getElementById('chapters-heading');
 
-      let currentSort = 'desc';
-      let currentSearch = '';
-      let allChapters: any[] = [];
-
-      loadChaptersBtn?.addEventListener('click', async () => {
-        loadChaptersBtn.classList.add('hidden');
+      loadBtn?.addEventListener('click', async () => {
+        loadBtn.classList.add('hidden');
         chaptersLoading?.classList.remove('hidden');
         try {
-          const res = await fetch(`/api/series/${seriesId}?includeChapters=all`);
-          if (!res.ok) throw new Error('Failed');
-          const data = await res.json();
-          allChapters = data.chapters || [];
+          await fetchChapters();
           chaptersPlaceholder?.classList.add('hidden');
           chaptersUi?.classList.remove('hidden');
-          if (chaptersHeadingContainer) chaptersHeadingContainer.innerHTML = `Chapters (${allChapters.length})`;
-          sessionStorage.setItem('ch-seq-' + seriesId, JSON.stringify(allChapters.map((c: any) => c.id)));
+          if (chaptersHeading) {
+            chaptersHeading.textContent = `Chapters (${allChapters.length})`;
+          }
+          chaptersContainer = document.getElementById('chapters-list');
+          
+          // Setup search filter & sort once list is visible
+          const searchInput = document.getElementById('chapter-search');
+          searchInput?.addEventListener('input', (e) => {
+            currentSearch = (e.target as HTMLInputElement).value.toLowerCase().trim();
+            renderChapters();
+          });
+
+          const sortBtn = document.getElementById('chapter-sort');
+          const sortText = document.getElementById('sort-text');
+          const sortIconDesc = document.getElementById('sort-icon-desc');
+          const sortIconAsc = document.getElementById('sort-icon-asc');
+
+          sortBtn?.addEventListener('click', () => {
+            if (currentSort === 'desc') {
+              currentSort = 'asc';
+              if (sortText) sortText.textContent = 'Oldest';
+              sortIconDesc?.classList.add('hidden');
+              sortIconAsc?.classList.remove('hidden');
+            } else {
+              currentSort = 'desc';
+              if (sortText) sortText.textContent = 'Newest';
+              sortIconDesc?.classList.remove('hidden');
+              sortIconAsc?.classList.add('hidden');
+            }
+            renderChapters();
+          });
+
+          // Listen to checkbox tick button clicks
+          chaptersContainer?.addEventListener('click', (e) => {
+            const tickBtn = (e.target as HTMLElement).closest('.tick-btn');
+            if (tickBtn) {
+              e.preventDefault();
+              e.stopPropagation();
+              const chId = tickBtn.getAttribute('data-id');
+              if (chId) {
+                toggleChapterRead(chId);
+              }
+            }
+          });
+
           renderChapters();
-        } catch {
-          loadChaptersBtn.classList.remove('hidden');
+        } catch (err) {
+          loadBtn.classList.remove('hidden');
           chaptersLoading?.classList.add('hidden');
-          const p = chaptersPlaceholder?.querySelector('p');
+          const p = document.getElementById('chapters-placeholder-text');
           if (p) p.textContent = 'Failed to load chapters. Try again.';
         }
       });
 
-      function renderChapters() {
-        if (!chaptersContainer || !allChapters) return;
+      // Start background fetch for chapters list and action buttons
+      fetchChapters().catch(() => {});
 
-        // Filter chapters
-        let filtered = allChapters.filter(ch => {
-          const title = (ch.title || 'Chapter ' + ch.chapter).toLowerCase();
-          return title.includes(currentSearch);
-        });
-
-        // Sort chapters (Original WeebCentral chapters are descending / newest first)
-        let displayList = [...filtered];
-        if (currentSort === 'asc') {
-          displayList.reverse();
-        }
-
-        // Generate items HTML with entrance state classes
-        const itemsHtml = displayList.map(ch => {
-          const originalIdx = allChapters.findIndex(c => c.id === ch.id);
-          const displayNum = allChapters.length - originalIdx;
-          
-          return `
-            <a href="/read/${ch.id}" class="chapter-item flex items-center justify-between px-4 py-3 text-sm transition-all duration-300 hover:bg-canvas-soft opacity-0 translate-y-2" data-id="${ch.id}">
-              <div class="flex items-center gap-3">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas-soft-2 text-[11px] font-mono text-mute">${displayNum}</span>
-                <span class="font-medium text-ink">${ch.title || 'Chapter ' + ch.chapter}</span>
-              </div>
-              <div class="flex items-center gap-3">
-                ${ch.date ? `<span class="text-xs text-mute">${new Date(ch.date).toLocaleDateString()}</span>` : ''}
-                <svg class="h-4 w-4 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-              </div>
-            </a>
-          `;
-        }).join('');
-
-        if (displayList.length === 0) {
-          chaptersContainer.innerHTML = `
-            <div class="flex items-center justify-center py-12">
-              <p class="text-sm text-mute">No chapters match your search</p>
-            </div>
-          `;
-          return;
-        }
-
-        // Smooth transition overlay trigger
-        chaptersContainer.style.opacity = '0';
-        chaptersContainer.style.transform = 'translateY(4px)';
-        chaptersContainer.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
-
-        setTimeout(() => {
-          chaptersContainer.innerHTML = itemsHtml;
-          chaptersContainer.style.opacity = '1';
-          chaptersContainer.style.transform = 'translateY(0)';
-
-          // Trigger entrance animation for each item sequentially (staggered effect)
-          const items = chaptersContainer.querySelectorAll('.chapter-item');
-          items.forEach((item, index) => {
-            setTimeout(() => {
-              item.classList.remove('opacity-0', 'translate-y-2');
-              item.classList.add('opacity-100', 'translate-y-0');
-            }, Math.min(index * 15, 300));
-          });
-        }, 150);
-      }
-
-      // Initial render
-      renderChapters();
-
-      // Hook up search filter
-      const searchInput = document.getElementById('chapter-search');
-      searchInput?.addEventListener('input', (e) => {
-        currentSearch = (e.target as HTMLInputElement).value.toLowerCase().trim();
-        renderChapters();
-      });
-
-      // Hook up sort toggle
-      const sortBtn = document.getElementById('chapter-sort');
-      const sortText = document.getElementById('sort-text');
-      const sortIconDesc = document.getElementById('sort-icon-desc');
-      const sortIconAsc = document.getElementById('sort-icon-asc');
-
-      sortBtn?.addEventListener('click', () => {
-        if (currentSort === 'desc') {
-          currentSort = 'asc';
-          if (sortText) sortText.textContent = 'Oldest';
-          sortIconDesc?.classList.add('hidden');
-          sortIconAsc?.classList.remove('hidden');
-        } else {
-          currentSort = 'desc';
-          if (sortText) sortText.textContent = 'Newest';
-          sortIconDesc?.classList.remove('hidden');
-          sortIconAsc?.classList.add('hidden');
-        }
-        renderChapters();
-      });
-
-    } catch {
+    } catch (err) {
+      console.error('Failed to load series details:', err);
       if (container) {
         container.innerHTML = `
           <div class="flex flex-col items-center gap-4 py-20 text-center">
@@ -442,6 +402,188 @@ const { id } = Astro.params;
         `;
       }
     }
+  }
+
+  // Chapter variables
+  let currentSort = 'desc';
+  let currentSearch = '';
+  let allChapters: any[] = [];
+  let chaptersContainer: HTMLElement | null = null;
+  let fetchPromise: Promise<any> | null = null;
+
+  async function fetchChapters() {
+    if (fetchPromise) return fetchPromise;
+
+    fetchPromise = fetch(`/api/series/${seriesId}?includeChapters=all`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed');
+        return res.json();
+      })
+      .then(data => {
+        allChapters = data.chapters || [];
+        sessionStorage.setItem('ch-seq-' + seriesId, JSON.stringify(allChapters.map((c: any) => c.id)));
+        updateActionButtons();
+        return allChapters;
+      })
+      .catch(err => {
+        fetchPromise = null;
+        throw err;
+      });
+
+    return fetchPromise;
+  }
+
+  function updateActionButtons() {
+    const quickActions = document.getElementById('quick-actions');
+    if (!quickActions || allChapters.length === 0) return;
+
+    // Check if there is history for this series
+    const history = JSON.parse(localStorage.getItem('manga-reading-history') || '[]');
+    const seriesHistory = history.find((h: any) => h.seriesId === seriesId);
+
+    let continueBtnHtml = '';
+    let startBtnClass = '';
+    let latestBtnClass = '';
+
+    if (seriesHistory) {
+      // Find next chapter to read
+      const lastReadId = seriesHistory.lastChapterId;
+      const idx = allChapters.findIndex((c: any) => c.id === lastReadId);
+      
+      let nextChId = lastReadId;
+      let nextChTitle = seriesHistory.lastChapterTitle;
+      let isLatestRead = false;
+
+      if (idx !== -1) {
+        if (idx > 0) {
+          nextChId = allChapters[idx - 1].id;
+          nextChTitle = allChapters[idx - 1].title || `Chapter ${allChapters[idx - 1].chapter}`;
+        } else {
+          isLatestRead = true;
+        }
+      }
+
+      continueBtnHtml = `
+        <a href="/read/${nextChId}" class="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-6 text-xs font-semibold text-canvas transition-all hover:opacity-90 active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+          </svg>
+          ${isLatestRead ? `Re-read Latest (${nextChTitle})` : `Continue: ${nextChTitle}`}
+        </a>
+      `;
+
+      startBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-xs font-semibold text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up-d1';
+      latestBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-xs font-semibold text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up-d2';
+    } else {
+      startBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full bg-ink px-6 text-xs font-semibold text-canvas transition-all hover:opacity-90 active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up';
+      latestBtnClass = 'inline-flex h-10 items-center justify-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-xs font-semibold text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer shadow-vercel-sm animate-fade-up-d1';
+    }
+
+    const startCh = allChapters[allChapters.length - 1];
+    const latestCh = allChapters[0];
+
+    quickActions.innerHTML = `
+      ${continueBtnHtml}
+      <a href="/read/${startCh.id}" class="${startBtnClass}">
+        Read from Start
+      </a>
+      <a href="/read/${latestCh.id}" class="${latestBtnClass}">
+        Latest Chapter
+      </a>
+    `;
+  }
+
+  function renderChapters() {
+    if (!chaptersContainer || !allChapters) return;
+
+    // Filter chapters
+    let filtered = allChapters.filter(ch => {
+      const title = (ch.title || 'Chapter ' + ch.chapter).toLowerCase();
+      return title.includes(currentSearch);
+    });
+
+    // Sort chapters
+    let displayList = [...filtered];
+    if (currentSort === 'asc') {
+      displayList.reverse();
+    }
+
+    const readKey = 'read-ch-' + seriesId;
+    const readList = JSON.parse(localStorage.getItem(readKey) || '[]');
+
+    // Generate items HTML with checkmarks
+    const itemsHtml = displayList.map(ch => {
+      const originalIdx = allChapters.findIndex(c => c.id === ch.id);
+      const displayNum = allChapters.length - originalIdx;
+      const isRead = readList.includes(ch.id);
+      
+      return `
+        <a href="/read/${ch.id}" class="chapter-item flex items-center justify-between px-4 py-3 text-sm transition-all duration-300 hover:bg-canvas-soft opacity-0 translate-y-2" data-id="${ch.id}">
+          <div class="flex items-center gap-3">
+            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas-soft-2 text-[11px] font-mono text-mute">${displayNum}</span>
+            <span class="font-medium text-ink ${isRead ? 'text-body/65' : ''}">${ch.title || 'Chapter ' + ch.chapter}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            ${ch.date ? `<span class="text-xs text-mute font-mono">${new Date(ch.date).toLocaleDateString()}</span>` : ''}
+            
+            <button class="tick-btn flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-hairline bg-canvas shadow-vercel-sm transition-all hover:bg-canvas-soft-2 cursor-pointer" data-id="${ch.id}" title="${isRead ? 'Mark as unread' : 'Mark as read'}">
+              ${isRead ? `
+                <svg class="h-3.5 w-3.5 text-success fill-success animate-scale-in" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                </svg>
+              ` : `
+                <svg class="h-3.5 w-3.5 text-mute opacity-45 hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
+              `}
+            </button>
+          </div>
+        </a>
+      `;
+    }).join('');
+
+    if (displayList.length === 0) {
+      chaptersContainer.innerHTML = `
+        <div class="flex items-center justify-center py-12">
+          <p class="text-sm text-mute">No chapters match your search</p>
+        </div>
+      `;
+      return;
+    }
+
+    chaptersContainer.style.opacity = '0';
+    chaptersContainer.style.transform = 'translateY(4px)';
+    chaptersContainer.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+
+    setTimeout(() => {
+      if (chaptersContainer) {
+        chaptersContainer.innerHTML = itemsHtml;
+        chaptersContainer.style.opacity = '1';
+        chaptersContainer.style.transform = 'translateY(0)';
+
+        const items = chaptersContainer.querySelectorAll('.chapter-item');
+        items.forEach((item, index) => {
+          setTimeout(() => {
+            item.classList.remove('opacity-0', 'translate-y-2');
+            item.classList.add('opacity-100', 'translate-y-0');
+          }, Math.min(index * 15, 300));
+        });
+      }
+    }, 150);
+  }
+
+  function toggleChapterRead(chId: string) {
+    const readKey = 'read-ch-' + seriesId;
+    let readList = JSON.parse(localStorage.getItem(readKey) || '[]');
+    if (readList.includes(chId)) {
+      readList = readList.filter((id: string) => id !== chId);
+    } else {
+      readList.push(chId);
+    }
+    localStorage.setItem(readKey, JSON.stringify(readList));
+    
+    renderChapters();
+    updateActionButtons();
   }
 
   loadSeries();
