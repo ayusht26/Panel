@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 const { id } = Astro.params;
 ---
 
-<Layout title="Reading... — Panel">
+<Layout title="Reading...">
   <main>
     <!-- Toast container for sleek mode notifications -->
     <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2 items-center"></div>
@@ -416,6 +416,7 @@ const { id } = Astro.params;
       if (chapterTitle) {
         chapterTitle.textContent = data.chapterTitle || `Chapter`;
       }
+      document.title = `Reading - ${data.chapterTitle || 'Chapter'}`;
 
       if (pages.length === 0) {
         if (container) {

@@ -224,12 +224,29 @@
     animation: shimmer 1.5s infinite linear;
     border-radius: 6px;
   }
-
-  .dark .skeleton {
-    background: linear-gradient(90deg, var(--color-canvas-soft-2) 25%, var(--color-canvas) 50%, var(--color-canvas-soft-2) 75%);
-  }
 }
 
 .page-enter {
   animation: fade-up 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* View Transition Theme Ripple */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Scoped to AnimatedThemeToggler — the toggler sets the data-attribute and the variable only during a theme toggle. */
+html[data-magicui-theme-vt="active"]::view-transition-group(root) {
+  animation-duration: var(--magicui-theme-toggle-vt-duration);
+}
+
+/* Disable style transitions during view-transition repaints to lock 60fps */
+.no-transitions,
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
+  transition: none !important;
+  animation-duration: 0s !important;
 }

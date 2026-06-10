@@ -138,8 +138,11 @@
       const items = resultsList.querySelectorAll('.search-item');
       items.forEach((item, i) => item.classList.toggle('bg-canvas-soft', i === selectedIndex));
     }
-    if (e.key === 'Enter' && selectedIndex >= 0 && results[selectedIndex]) {
-      window.location.href = `/series/${results[selectedIndex].id}`;
+    if (e.key === 'Enter') {
+      const activeIndex = selectedIndex >= 0 ? selectedIndex : (results.length > 0 ? 0 : -1);
+      if (activeIndex >= 0 && results[activeIndex]) {
+        window.location.href = `/series/${results[activeIndex].id}`;
+      }
     }
   });
 </script>

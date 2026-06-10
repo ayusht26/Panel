@@ -16,10 +16,6 @@ import Footer from '../components/Footer.astro';
       <div class="relative mx-auto max-w-7xl px-4 pb-32 pt-24 sm:px-6 md:pb-40 md:pt-32">
         <div class="grid gap-12 lg:grid-cols-[1fr_400px] lg:gap-16 xl:gap-20">
           <div class="flex flex-col justify-center">
-            <div class="animate-fade-up inline-flex w-fit items-center gap-1.5 rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-[11px] font-mono text-body shadow-vercel-sm">
-              <span class="h-1.5 w-1.5 rounded-full bg-cyan" />
-              Now reading from WeebCentral
-            </div>
             <h1 class="mt-6 animate-fade-up-d1 text-balance text-4xl font-semibold leading-[1.08] tracking-[-0.04em] md:text-5xl lg:text-6xl">
               Read manga.<br />
               <span class="text-body">Anywhere.</span>
@@ -42,9 +38,9 @@ import Footer from '../components/Footer.astro';
 
           <div class="relative hidden lg:flex items-center justify-center min-h-[420px] w-full max-w-[480px]">
             <div id="hero-covers-stack" class="relative w-full h-[360px]">
-              <div class="absolute left-[10px] top-[60px] w-40 h-60 rotate-[-4deg] z-10 animate-float shadow-vercel-md border border-hairline bg-canvas-soft skeleton rounded-xl animate-pulse" />
-              <div class="absolute left-[160px] top-[15px] w-44 h-66 rotate-[2deg] z-20 animate-float-d2 shadow-vercel-lg border border-hairline bg-canvas-soft skeleton rounded-xl animate-pulse" />
-              <div class="absolute left-[310px] top-[70px] w-40 h-60 rotate-[-2deg] z-10 animate-float-d4 shadow-vercel-md border border-hairline bg-canvas-soft skeleton rounded-xl animate-pulse" />
+              <div class="absolute left-[10px] top-[60px] w-40 h-60 rotate-[-4deg] z-10 animate-float shadow-vercel-md border border-hairline skeleton rounded-xl" />
+              <div class="absolute left-[160px] top-[15px] w-44 h-66 rotate-[2deg] z-20 animate-float-d2 shadow-vercel-lg border border-hairline skeleton rounded-xl" />
+              <div class="absolute left-[310px] top-[70px] w-40 h-60 rotate-[-2deg] z-10 animate-float-d4 shadow-vercel-md border border-hairline skeleton rounded-xl" />
             </div>
           </div>
         </div>
@@ -141,11 +137,11 @@ import Footer from '../components/Footer.astro';
     </section>
 
     <!-- ==================== CTA ==================== -->
-    <section class="bg-ink px-4 py-20 text-canvas sm:px-6 md:py-28">
+    <section class="bg-canvas-soft-2 px-4 py-20 text-ink sm:px-6 md:py-28 border-t border-hairline theme-transition">
       <div class="mx-auto max-w-2xl text-center">
         <h2 class="text-balance text-3xl font-semibold tracking-[-0.03em] md:text-4xl">Start reading now.</h2>
-        <p class="mx-auto mt-4 max-w-md text-[15px] text-white/60">No account. No paywalls. Just manga.</p>
-        <a href="/search" class="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-canvas px-6 text-sm font-medium text-ink transition-all hover:opacity-90 active:scale-[0.97]">
+        <p class="mx-auto mt-4 max-w-md text-[15px] text-body">No account. No paywalls. Just manga.</p>
+        <a href="/search" class="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-medium text-canvas transition-all hover:opacity-90 active:scale-[0.97]">
           Explore the library
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
         </a>
@@ -191,7 +187,7 @@ import Footer from '../components/Footer.astro';
         const cardEls = cardConfigs.map((config, i) => {
           const card = document.createElement('a');
           card.href = `/series/${items[config.initialIndex].id}`;
-          card.className = `${config.classes} rounded-xl border border-hairline bg-canvas-soft shadow-vercel-md overflow-hidden group transition-all duration-500 ease-in-out hover:rotate-0 hover:-translate-y-2 hover:scale-105 skeleton animate-pulse`;
+          card.className = `${config.classes} rounded-xl border border-hairline shadow-vercel-md overflow-hidden group transition-all duration-500 ease-in-out hover:rotate-0 hover:-translate-y-2 hover:scale-105 skeleton`;
           
           const img = document.createElement('img');
           img.src = items[config.initialIndex].image;
@@ -200,7 +196,7 @@ import Footer from '../components/Footer.astro';
           img.loading = 'lazy';
           img.onload = () => {
             img.classList.remove('opacity-0');
-            card.classList.remove('skeleton', 'animate-pulse');
+            card.classList.remove('skeleton');
           };
           img.onerror = () => {
             img.style.display = 'none';
@@ -227,13 +223,13 @@ import Footer from '../components/Footer.astro';
           
           setTimeout(() => {
             targetCard.card.href = `/series/${nextItem.id}`;
-            targetCard.card.classList.add('skeleton', 'animate-pulse');
+            targetCard.card.classList.add('skeleton');
             targetCard.img.classList.add('opacity-0');
             targetCard.img.src = nextItem.image;
             targetCard.img.alt = nextItem.title;
             targetCard.img.onload = () => {
               targetCard.img.classList.remove('opacity-0');
-              targetCard.card.classList.remove('skeleton', 'animate-pulse');
+              targetCard.card.classList.remove('skeleton');
             };
             targetCard.img.onerror = () => {
               targetCard.img.style.display = 'none';
@@ -262,13 +258,13 @@ import Footer from '../components/Footer.astro';
               <img src="${u.cover}" alt="${u.seriesTitle}" class="h-full w-full object-contain transition-all duration-500 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-mute text-xs\\'>No cover</div>'" />
               
               <!-- Default Overlay (Legible in light and dark mode) -->
-              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 via-ink/40 to-transparent p-3 pt-8 transition-opacity duration-300 group-hover:opacity-0">
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-8 transition-opacity duration-300 group-hover:opacity-0">
                 <p class="text-xs font-semibold leading-tight text-white line-clamp-1">${u.seriesTitle}</p>
                 <p class="mt-0.5 text-[10px] text-white/80">${cleanChapter}</p>
               </div>
               
               <!-- Hover Overlay (Animated dark pane) -->
-              <div class="absolute inset-0 bg-ink/75 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-3 transition-all duration-300 translate-y-2 group-hover:translate-y-0 backdrop-blur-[1.5px] pointer-events-none">
+              <div class="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-3 transition-all duration-300 translate-y-2 group-hover:translate-y-0 backdrop-blur-[1.5px] pointer-events-none">
                 <p class="text-xs font-semibold leading-tight text-white line-clamp-2">${u.seriesTitle}</p>
                 <p class="mt-1.5 text-[10px] font-medium text-white/85">${cleanChapter}</p>
               </div>

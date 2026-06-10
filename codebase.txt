@@ -1,0 +1,3370 @@
+Project Structure:
+.gitignore
+AGENTS.md
+astro.config.mjs
+DESIGN.md
+package.json
+skills-lock.json
+tsconfig.json
+public/
+  favicon.ico
+  favicon.svg
+src/
+  components/
+    Footer.astro
+    Nav.astro
+    SearchModal.astro
+    SeriesCard.astro
+  layouts/
+    Layout.astro
+  lib/
+    weebcentral.ts
+  pages/
+    api/
+      chapter/[id].ts
+      series/[id].ts
+      home.ts
+      proxy-image.ts
+      search.ts
+    read/[id].astro
+    series/[id].astro
+    index.astro
+    search.astro
+  styles/
+    global.css
+
+========================================
+File: .gitignore
+========================================
+# build output
+dist/
+
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+
+========================================
+File: AGENTS.md
+========================================
+Panel — A clean, modern manga reader built with Astro + Tailwind CSS v4.
+
+Powered by WeebCentral's library. DESIGN.md provides the Vercel-inspired design language.
+
+## Conventions
+- Use `cmd /c` for file operations with brackets `[id]` in filenames (Windows limitation)
+- All API routes are server-side (SSR via `@astrojs/node`)
+- Search uses debounced client-side fetch to `/api/search`
+- Reader supports two modes: long-strip (default) and single-page
+- Ctrl+K opens search modal from any page
+
+## Run
+- `npm run dev` — dev server
+- `npm run build` — production build
+- `npm run preview` — preview build
+
+
+========================================
+File: astro.config.mjs
+========================================
+// @ts-check
+import { defineConfig } from 'astro/config';
+import tailwind from '@tailwindcss/vite';
+import node from '@astrojs/node';
+
+// https://astro.build/config
+export default defineConfig({
+  output: 'server',
+  adapter: node({
+    mode: 'standalone'
+  }),
+  vite: {
+    plugins: [tailwind()],
+    server: {
+      watch: {
+        ignored: [
+          '**/db.sqlite',
+          '**/db_fallback.json',
+          '**/db.sqlite-journal',
+          '**/.system_generated/**',
+          '**/dist/**'
+        ]
+      }
+    }
+  }
+});
+
+
+========================================
+File: package.json
+========================================
+{
+  "name": "panel-reader",
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/node": "^10.1.4",
+    "astro": "^6.4.5",
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.9",
+    "tailwindcss": "^4.0.9"
+  }
+}
+
+
+========================================
+File: skills-lock.json
+========================================
+{
+  "version": 1,
+  "skills": {
+    "ai-sdk": {
+      "source": "vercel/ai",
+      "sourceType": "github",
+      "skillPath": "skills/use-ai-sdk/SKILL.md",
+      "computedHash": "2249889eb47ef0f61c4dba4cf2afe01c1c8dd793bb4c24230347c1ab909bb7dd"
+    },
+    "astro": {
+      "source": "astrolicious/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/astro/SKILL.md",
+      "computedHash": "3a70f9666e7b6a03efb939b7e62938f4d3a6a5d956b2cc3c10011fda6ba27e9b"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "tailwind-4-docs": {
+      "source": "lombiq/tailwind-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/tailwind-4-docs/SKILL.md",
+      "computedHash": "4900f575f24641b1af459cda37cbb8438ecf3f8f1a63148384197cb730895093"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-best-practices/SKILL.md",
+      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-guidelines/SKILL.md",
+      "computedHash": "f3bc47f890f42a44db1007ab390709ec368e4b8c089baee6b0007182236ac474"
+    }
+  }
+}
+
+
+========================================
+File: tsconfig.json
+========================================
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"]
+}
+
+
+========================================
+File: src/components/Footer.astro
+========================================
+<footer class="border-t border-hairline bg-canvas">
+  <div class="mx-auto max-w-7xl px-6 py-12">
+    <div class="flex flex-col items-center justify-between gap-6 md:flex-row">
+      <div class="flex items-center gap-3">
+        <svg viewBox="0 0 32 32" class="h-5 w-5" fill="none">
+          <rect width="32" height="32" rx="8" fill="currentColor" class="text-ink" />
+          <path d="M10 10h4v12h-4zM18 10h4v12h-4z" fill="currentColor" class="text-canvas" />
+        </svg>
+        <span class="text-[11px] font-mono tracking-tight text-body">
+          Panel &copy; {new Date().getFullYear()}
+        </span>
+      </div>
+      <div class="flex items-center gap-6 text-[11px] text-body">
+        <span class="text-mute">Powered by WeebCentral</span>
+        <span class="hidden sm:inline text-mute">&middot;</span>
+        <span class="hidden sm:inline">Not affiliated with any publisher</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+========================================
+File: src/components/Nav.astro
+========================================
+---
+import SearchModal from './SearchModal.astro';
+---
+
+<nav class="sticky top-0 z-50 h-14 border-b border-hairline bg-canvas/80 backdrop-blur-xl supports-[backdrop-filter]:bg-canvas/70 theme-transition">
+  <div class="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6">
+    <a href="/" class="flex items-center gap-2.5 transition-opacity hover:opacity-80">
+      <svg viewBox="0 0 32 32" class="h-6 w-6 sm:h-7 sm:w-7" fill="none">
+        <rect width="32" height="32" rx="8" fill="currentColor" class="text-ink" />
+        <rect x="10" y="10" width="4" height="12" rx="1" fill="currentColor" class="text-canvas" />
+        <rect x="18" y="10" width="4" height="12" rx="1" fill="currentColor" class="text-canvas" />
+      </svg>
+      <span class="text-sm font-semibold tracking-tight sm:text-[15px]">Panel</span>
+    </a>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <button
+        id="theme-toggle"
+        class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-canvas-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/20"
+        aria-label="Toggle theme"
+      >
+        <svg id="sun-icon" class="hidden h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+        </svg>
+        <svg id="moon-icon" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+        </svg>
+      </button>
+
+      <button id="search-trigger" class="flex h-8 items-center gap-2 rounded-lg border border-hairline bg-canvas-soft px-3 text-sm text-body transition-colors hover:border-hairline-strong hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/20 sm:h-9 sm:px-3.5">
+        <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+        <span class="hidden sm:inline text-xs">Search manga...</span>
+        <span class="hidden lg:inline text-[10px] font-mono text-mute">⌘K</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<SearchModal />
+
+<script>
+  // Theme toggle
+  const sunIcon = document.getElementById('sun-icon');
+  const moonIcon = document.getElementById('moon-icon');
+  const themeToggle = document.getElementById('theme-toggle');
+
+  function getTheme() {
+    return localStorage.getItem('theme') ||
+      (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  }
+
+  function setTheme(theme) {
+    localStorage.setItem('theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      sunIcon?.classList.remove('hidden');
+      moonIcon?.classList.add('hidden');
+    } else {
+      document.documentElement.classList.remove('dark');
+      sunIcon?.classList.add('hidden');
+      moonIcon?.classList.remove('hidden');
+    }
+  }
+
+  // Init
+  setTheme(getTheme());
+
+  type TransitionVariant = "circle" | "square" | "triangle" | "diamond" | "hexagon" | "rectangle" | "star";
+
+  function polygonCollapsed(cx: number, cy: number, vertexCount: number): string {
+    const pairs = Array.from(
+      { length: vertexCount },
+      () => `${cx}px ${cy}px`
+    ).join(", ");
+    return `polygon(${pairs})`;
+  }
+
+  function getThemeTransitionClipPaths(
+    variant: TransitionVariant,
+    cx: number,
+    cy: number,
+    maxRadius: number,
+    viewportWidth: number,
+    viewportHeight: number
+  ): [string, string] {
+    switch (variant) {
+      case "circle":
+        return [
+          `circle(0px at ${cx}px ${cy}px)`,
+          `circle(${maxRadius}px at ${cx}px ${cy}px)`,
+        ];
+      case "square": {
+        const halfW = Math.max(cx, viewportWidth - cx);
+        const halfH = Math.max(cy, viewportHeight - cy);
+        const halfSide = Math.max(halfW, halfH) * 1.05;
+        const end = [
+          `${cx - halfSide}px ${cy - halfSide}px`,
+          `${cx + halfSide}px ${cy - halfSide}px`,
+          `${cx + halfSide}px ${cy + halfSide}px`,
+          `${cx - halfSide}px ${cy + halfSide}px`,
+        ].join(", ");
+        return [polygonCollapsed(cx, cy, 4), `polygon(${end})`];
+      }
+      case "triangle": {
+        const scale = maxRadius * 2.2;
+        const dx = (Math.sqrt(3) / 2) * scale;
+        const verts = [
+          `${cx}px ${cy - scale}px`,
+          `${cx + dx}px ${cy + 0.5 * scale}px`,
+          `${cx - dx}px ${cy + 0.5 * scale}px`,
+        ].join(", ");
+        return [polygonCollapsed(cx, cy, 3), `polygon(${verts})`];
+      }
+      case "diamond": {
+        const R = maxRadius * Math.SQRT2;
+        const end = [
+          `${cx}px ${cy - R}px`,
+          `${cx + R}px ${cy}px`,
+          `${cx}px ${cy + R}px`,
+          `${cx - R}px ${cy}px`,
+        ].join(", ");
+        return [polygonCollapsed(cx, cy, 4), `polygon(${end})`];
+      }
+      case "hexagon": {
+        const R = maxRadius * Math.SQRT2;
+        const verts: string[] = [];
+        for (let i = 0; i < 6; i++) {
+          const a = -Math.PI / 2 + (i * Math.PI) / 3;
+          verts.push(`${cx + R * Math.cos(a)}px ${cy + R * Math.sin(a)}px`);
+        }
+        return [polygonCollapsed(cx, cy, 6), `polygon(${verts.join(", ")})`];
+      }
+      case "rectangle": {
+        const halfW = Math.max(cx, viewportWidth - cx);
+        const halfH = Math.max(cy, viewportHeight - cy);
+        const end = [
+          `${cx - halfW}px ${cy - halfH}px`,
+          `${cx + halfW}px ${cy - halfH}px`,
+          `${cx + halfW}px ${cy + halfH}px`,
+          `${cx - halfW}px ${cy + halfH}px`,
+        ].join(", ");
+        return [polygonCollapsed(cx, cy, 4), `polygon(${end})` ];
+      }
+      case "star": {
+        const R = maxRadius * Math.SQRT2 * 1.03;
+        const innerRatio = 0.42;
+        const starPolygon = (radius: number) => {
+          const verts: string[] = [];
+          for (let i = 0; i < 5; i++) {
+            const outerA = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+            verts.push(
+              `${cx + radius * Math.cos(outerA)}px ${cy + radius * Math.sin(outerA)}px`
+            );
+            const innerA = outerA + Math.PI / 5;
+            verts.push(
+              `${cx + radius * innerRatio * Math.cos(innerA)}px ${cy + radius * innerRatio * Math.sin(innerA)}px`
+            );
+          }
+          return `polygon(${verts.join(", ")})`;
+        };
+        const startR = Math.max(2, R * 0.025);
+        return [starPolygon(startR), starPolygon(R)];
+      }
+      default:
+        return [
+          `circle(0px at ${cx}px ${cy}px)`,
+          `circle(${maxRadius}px at ${cx}px ${cy}px)`,
+        ];
+    }
+  }
+
+  themeToggle?.addEventListener('click', async () => {
+    const next = getTheme() === 'dark' ? 'light' : 'dark';
+    const variant: TransitionVariant = "circle";
+    const duration = 400;
+    
+    if (!(document as any).startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTheme(next);
+      return;
+    }
+    
+    const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    
+    const rect = themeToggle.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    
+    const maxRadius = Math.hypot(
+      Math.max(x, viewportWidth - x),
+      Math.max(y, viewportHeight - y)
+    );
+    
+    const clipPath = getThemeTransitionClipPaths(
+      variant,
+      x,
+      y,
+      maxRadius,
+      viewportWidth,
+      viewportHeight
+    );
+    
+    const root = document.documentElement;
+    root.dataset.magicuiThemeVt = "active";
+    root.style.setProperty(
+      "--magicui-theme-toggle-vt-duration",
+      `${duration}ms`
+    );
+    root.style.setProperty("--magicui-theme-vt-clip-from", clipPath[0]);
+    root.classList.add('no-transitions');
+    
+    const cleanup = () => {
+      delete root.dataset.magicuiThemeVt;
+      root.style.removeProperty("--magicui-theme-toggle-vt-duration");
+      root.style.removeProperty("--magicui-theme-vt-clip-from");
+      root.classList.remove('no-transitions');
+    };
+    
+    const transition = (document as any).startViewTransition(() => {
+      setTheme(next);
+    });
+    
+    if (transition && typeof transition.finished?.finally === "function") {
+      transition.finished.finally(cleanup);
+    } else {
+      setTimeout(cleanup, duration);
+    }
+    
+    const ready = transition?.ready;
+    if (ready && typeof ready.then === "function") {
+      ready.then(() => {
+        document.documentElement.animate(
+          {
+            clipPath,
+          },
+          {
+            duration,
+            easing: variant === "star" ? "linear" : "ease-in-out",
+            fill: "forwards",
+            pseudoElement: "::view-transition-new(root)",
+          }
+        );
+      });
+    }
+  });
+
+  // Search trigger
+  const trigger = document.getElementById('search-trigger');
+  function openSearch() {
+    document.dispatchEvent(new CustomEvent('open-search'));
+  }
+  trigger?.addEventListener('click', openSearch);
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault();
+      openSearch();
+    }
+  });
+</script>
+
+
+========================================
+File: src/components/SearchModal.astro
+========================================
+<div id="search-overlay" class="fixed inset-0 z-[100] hidden">
+  <div class="absolute inset-0 bg-ink/20 backdrop-blur-sm"></div>
+  <div class="relative flex min-h-full items-center justify-center p-4">
+    <div class="w-full max-w-lg animate-scale-in">
+      <div class="overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-modal">
+        <div class="flex items-center gap-3 border-b border-hairline px-4">
+          <svg class="h-4 w-4 shrink-0 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <input
+            id="search-input"
+            type="text"
+            placeholder="Search manga..."
+            autocomplete="off"
+            class="h-12 w-full border-0 bg-transparent text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-0"
+          />
+          <kbd class="hidden shrink-0 rounded border border-hairline px-1.5 py-0.5 text-[10px] font-mono text-mute sm:inline-block">ESC</kbd>
+        </div>
+        <div id="search-results" class="max-h-[320px] overflow-y-auto p-2">
+          <div id="search-empty" class="flex flex-col items-center gap-2 py-8 text-center">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-canvas-soft">
+              <svg class="h-5 w-5 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </div>
+            <p class="text-sm text-mute">Type to search manga...</p>
+          </div>
+          <div id="search-loading" class="hidden py-8 text-center">
+            <div class="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-hairline-strong border-t-ink"></div>
+            <p class="mt-2 text-xs text-mute">Searching...</p>
+          </div>
+          <div id="search-error" class="hidden py-8 text-center">
+            <p class="text-sm text-error">Something went wrong. Try again.</p>
+          </div>
+          <div id="search-list" class="hidden space-y-1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const overlay = document.getElementById('search-overlay');
+  const input = document.getElementById('search-input');
+  const resultsList = document.getElementById('search-list');
+  const emptyState = document.getElementById('search-empty');
+  const loadingState = document.getElementById('search-loading');
+  const errorState = document.getElementById('search-error');
+
+  let debounceTimer;
+  let selectedIndex = -1;
+  let results = [];
+
+  function closeSearch() {
+    overlay.classList.add('hidden');
+    input.value = '';
+    resultsList.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+    loadingState.classList.add('hidden');
+    errorState.classList.add('hidden');
+    resultsList.innerHTML = '';
+    results = [];
+    selectedIndex = -1;
+  }
+
+  async function performSearch(query) {
+    if (query.length < 2) {
+      resultsList.classList.add('hidden');
+      emptyState.classList.remove('hidden');
+      loadingState.classList.add('hidden');
+      errorState.classList.add('hidden');
+      return;
+    }
+
+    loadingState.classList.remove('hidden');
+    emptyState.classList.add('hidden');
+    errorState.classList.add('hidden');
+    resultsList.classList.add('hidden');
+
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+      results = data.results || [];
+      selectedIndex = -1;
+
+      if (results.length === 0) {
+        loadingState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        emptyState.querySelector('p').textContent = 'No manga found.';
+        return;
+      }
+
+      resultsList.innerHTML = results.map((r, i) => `
+        <a href="/series/${r.id}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-canvas-soft search-item ${i === 0 ? 'bg-canvas-soft' : ''}" data-index="${i}">
+          <img src="${r.image}" alt="${r.title}" class="h-10 w-7 shrink-0 rounded object-cover" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 28 40%22><rect fill=%22%23ebebeb%22 width=%2228%22 height=%2240%22/></svg>'" />
+          <div class="min-w-0 flex-1">
+            <p class="truncate font-medium text-ink">${r.title}</p>
+            ${r.year ? `<p class="truncate text-xs text-mute">${r.year}</p>` : ''}
+          </div>
+        </a>
+      `).join('');
+
+      resultsList.classList.remove('hidden');
+      loadingState.classList.add('hidden');
+    } catch {
+      loadingState.classList.add('hidden');
+      emptyState.classList.add('hidden');
+      errorState.classList.remove('hidden');
+    }
+  }
+
+  document.addEventListener('open-search', () => {
+    overlay.classList.remove('hidden');
+    setTimeout(() => input?.focus(), 100);
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeSearch();
+  });
+
+  input?.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => performSearch(input.value.trim()), 250);
+  });
+
+  input?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSearch();
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const items = resultsList.querySelectorAll('.search-item');
+      if (selectedIndex < items.length - 1) selectedIndex++;
+      items.forEach((item, i) => item.classList.toggle('bg-canvas-soft', i === selectedIndex));
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (selectedIndex > 0) selectedIndex--;
+      const items = resultsList.querySelectorAll('.search-item');
+      items.forEach((item, i) => item.classList.toggle('bg-canvas-soft', i === selectedIndex));
+    }
+    if (e.key === 'Enter') {
+      const activeIndex = selectedIndex >= 0 ? selectedIndex : (results.length > 0 ? 0 : -1);
+      if (activeIndex >= 0 && results[activeIndex]) {
+        window.location.href = `/series/${results[activeIndex].id}`;
+      }
+    }
+  });
+</script>
+
+
+========================================
+File: src/components/SeriesCard.astro
+========================================
+---
+export interface Props {
+  id: string;
+  title: string;
+  image: string;
+  year?: string;
+  type?: string;
+  status?: string;
+  tags?: string[];
+}
+
+const { id, title, image, year, type, status, tags = [] } = Astro.props;
+const displayTags = tags.slice(0, 3);
+---
+
+<a
+  href={`/series/${id}`}
+  class="group relative flex flex-col overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover transition-all duration-200 hover:shadow-vercel-md"
+>
+  <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+    <img
+      src={image}
+      alt={title}
+      class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
+      loading="lazy"
+    />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+    {status && (
+      <span class="absolute left-2 top-2 rounded-full border border-white/20 bg-ink/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+        {status}
+      </span>
+    )}
+  </div>
+
+  <div class="flex flex-1 flex-col gap-1.5 p-3.5">
+    <h3 class="text-sm font-semibold leading-tight tracking-tight text-ink line-clamp-2">
+      {title}
+    </h3>
+    <div class="mt-auto flex items-center gap-2">
+      {year && <span class="text-[11px] text-mute font-mono">{year}</span>}
+      {type && <span class="text-[11px] text-mute">{type}</span>}
+    </div>
+    {displayTags.length > 0 && (
+      <div class="flex flex-wrap gap-1.5">
+        {displayTags.map(tag => (
+          <span class="rounded-full bg-canvas-soft border border-hairline px-2 py-0.5 text-[10px] text-body">
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</a>
+
+
+========================================
+File: src/layouts/Layout.astro
+========================================
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Panel — Read Manga, Beautifully',
+  description = 'A clean, modern manga reader powered by WeebCentral.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script is:inline>
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen bg-canvas-soft text-ink antialiased theme-transition flex flex-col">
+    <slot />
+  </body>
+</html>
+
+
+========================================
+File: src/lib/weebcentral.ts
+========================================
+import * as cheerio from 'cheerio';
+
+const BASE = 'https://weebcentral.com';
+const CDN = 'https://temp.compsci88.com/cover';
+
+export interface SeriesResult {
+  id: string;
+  title: string;
+  slug: string;
+  image: string;
+  type?: string;
+  year?: string;
+  status?: string;
+}
+
+export interface SeriesDetail extends SeriesResult {
+  altTitles: string[];
+  description: string;
+  authors: string[];
+  tags: string[];
+  chapters: ChapterInfo[];
+}
+
+export interface ChapterInfo {
+  id: string;
+  chapter: string;
+  title: string;
+  date: string;
+}
+
+export interface ChapterPages {
+  id: string;
+  pages: string[];
+  chapterTitle: string;
+}
+
+export interface HotUpdate {
+  seriesId: string;
+  seriesSlug: string;
+  seriesTitle: string;
+  chapterId: string;
+  chapterTitle: string;
+  cover: string;
+  date: string;
+}
+
+export interface HotSeriesItem {
+  id: string;
+  title: string;
+  slug: string;
+}
+
+export interface HomepageData {
+  hotUpdates: HotUpdate[];
+  latestUpdates: HotUpdate[];
+  hotSeries: HotSeriesItem[];
+  recentlyAdded: HotSeriesItem[];
+  recommendations: SeriesResult[];
+}
+
+async function fetchHTML(url: string): Promise<string> {
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+    },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
+  return res.text();
+}
+
+function extractSeriesId(href: string): string | null {
+  const m = href.match(/\/series\/([^/]+)/);
+  return m ? m[1] : null;
+}
+
+function extractChapterId(href: string): string | null {
+  const m = href.match(/\/chapters\/([^/]+)/);
+  return m ? m[1] : null;
+}
+
+export async function getHomepage(): Promise<HomepageData> {
+  const html = await fetchHTML(BASE + '/');
+  const $ = cheerio.load(html);
+
+  const hotUpdates: HotUpdate[] = [];
+  const latestUpdates: HotUpdate[] = [];
+  const hotSeries: HotSeriesItem[] = [];
+  const recentlyAdded: HotSeriesItem[] = [];
+  const recommendations: SeriesResult[] = [];
+
+  // Hot Updates — desktop grid items
+  $('article').each((_, el) => {
+    const $el = $(el);
+    const bottomDiv = $el.find('div.absolute.bottom-0');
+    if (bottomDiv.length === 0) return; // Skip mobile layout duplicates
+
+    const chapterLink = $el.find('a[href*="/chapters/"]').first();
+    const chapterHref = chapterLink.attr('href') || '';
+    const chapterId = extractChapterId(chapterHref);
+    if (!chapterId) return;
+
+    const img = $el.find('img').first();
+    const cover = img.attr('src') || img.attr('data-src') || '';
+    
+    // Extract seriesId from cover image URL filename (e.g. 01J76XYERPHPGCM3C3HEME1YAK)
+    const seriesId = cover.split('/').pop()?.split('.')[0] || '';
+    if (!seriesId) return;
+
+    const divs = bottomDiv.find('div');
+    const seriesTitle = divs.eq(0).text().trim();
+    const chapterTitle = divs.eq(1).text().trim();
+    const date = $el.find('time').attr('datetime') || '';
+    
+    const seriesSlug = seriesTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    hotUpdates.push({
+      seriesId, seriesSlug, seriesTitle,
+      chapterId, chapterTitle, cover, date,
+    });
+  });
+
+  // Latest Updates — flex row items with timestamp
+  $('article:has(a[href*="/chapters/"])').each((_, el) => {
+    const $el = $(el);
+    const seriesLink = $el.find('a[href*="/series/"]').first();
+    const seriesHref = seriesLink.attr('href') || '';
+    const seriesId = extractSeriesId(seriesHref);
+    if (!seriesId) return;
+
+    const chapterLink = $el.find('a[href*="/chapters/"]').first();
+    const chapterHref = chapterLink.attr('href') || '';
+    const chapterId = extractChapterId(chapterHref);
+    if (!chapterId) return;
+
+    const seriesTitle = chapterLink.find('div').first().text().trim() || seriesLink.text().trim();
+    const chapterTitle = chapterLink.find('span').first().text().trim() || 'Chapter';
+    const date = $el.find('time').attr('datetime') || '';
+    const img = $el.find('img').first();
+    const cover = img.attr('src') || img.attr('data-src') || '';
+    const seriesSlug = seriesHref.split('/').pop() || '';
+
+    // Deduplicate against hotUpdates
+    if (!latestUpdates.some(u => u.chapterId === chapterId)) {
+      latestUpdates.push({
+        seriesId, seriesSlug, seriesTitle,
+        chapterId, chapterTitle, cover, date,
+      });
+    }
+  });
+
+  // Hot Series
+  try {
+    const hotHtml = await fetchHTML(BASE + '/hot-series?sort=monthly_views');
+    const $hot = cheerio.load(hotHtml);
+    $hot('a[href*="/series/"]').each((_, el) => {
+      const href = $hot(el).attr('href') || '';
+      const id = extractSeriesId(href);
+      if (!id) return;
+      const title = $hot(el).text().trim();
+      if (title) hotSeries.push({ id, title, slug: href.split('/').pop() || '' });
+    });
+  } catch (err) {
+    console.error('Error fetching hot series:', err);
+  }
+
+  // Recently Added
+  $('a[href*="/series/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const id = extractSeriesId(href);
+    if (!id) return;
+    const parent = $(el).parent();
+    const sectionTitle = parent.closest('section').find('h2, h3').text().trim();
+    if (sectionTitle.toLowerCase().includes('recently') || $(el).closest('section').text().toLowerCase().includes('recently')) {
+      const title = $(el).text().trim();
+      if (title && !recentlyAdded.some(r => r.id === id)) {
+        recentlyAdded.push({ id, title, slug: href.split('/').pop() || '' });
+      }
+    }
+  });
+
+  // Recommendations — carousel items
+  $('.glide__slide a[href*="/series/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const id = extractSeriesId(href);
+    if (!id) return;
+    const img = $(el).find('img[src*="temp.compsci88.com"]').first();
+    const cover = img.attr('src') || img.attr('data-src') || '';
+    const rawTitle = $(el).find('img').attr('alt') || $(el).text().trim() || '';
+    const title = cleanMangaTitle(rawTitle);
+    if (title && !recommendations.some(r => r.id === id)) {
+      recommendations.push({
+        id, title, slug: href.split('/').pop() || '',
+        image: cover,
+      });
+    }
+  });
+
+  // If recommendations empty, fallback: grab featured series links with covers
+  if (recommendations.length === 0) {
+    $('a[href*="/series/"]').each((_, el) => {
+      const href = $(el).attr('href') || '';
+      const id = extractSeriesId(href);
+      if (!id || recommendations.some(r => r.id === id)) return;
+      const img = $(el).find('img[src*="temp.compsci88.com"]').first();
+      const cover = img.attr('src') || img.attr('data-src') || '';
+      const rawTitle = $(el).find('img').attr('alt') || '';
+      const title = cleanMangaTitle(rawTitle);
+      if (title) {
+        recommendations.push({
+          id, title, slug: href.split('/').pop() || '',
+          image: cover,
+        });
+      }
+    });
+  }
+
+  return { hotUpdates, latestUpdates, hotSeries, recentlyAdded, recommendations };
+}
+
+export async function searchSeries(query: string): Promise<SeriesResult[]> {
+  const url = `${BASE}/search/simple?location=main`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    },
+    body: new URLSearchParams({ text: query }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} searching`);
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  const results: SeriesResult[] = [];
+
+  $('a[href*="/series/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const match = href.match(/\/series\/([^/]+)\/([^/]+)/);
+    if (!match) return;
+    const id = match[1];
+    if (results.some(r => r.id === id)) return;
+    const img = $(el).find('img').first();
+    const src = img.attr('src') || img.attr('data-src') || '';
+    results.push({
+      id,
+      title: cleanMangaTitle(img.attr('alt') || match[2].replace(/-/g, ' ')),
+      slug: match[2],
+      image: src || getCoverUrl(id),
+    });
+  });
+
+  return results;
+}
+
+export async function getSeriesDetail(id: string): Promise<SeriesDetail> {
+  const url = `${BASE}/series/${id}`;
+  const html = await fetchHTML(url);
+  const $ = cheerio.load(html);
+
+  const title = $('h1').first().text().trim();
+  const description = $('p').first().text().trim();
+  const coverImg = $('img[src*="temp.compsci88.com"]').first().attr('src')
+    || $('img[src*="cover"]').first().attr('src')
+    || getCoverUrl(id);
+
+  const altTitles: string[] = [];
+  const authors: string[] = [];
+  const tags: string[] = [];
+
+  for (const el of $('li').toArray()) {
+    const strong = $(el).find('strong').text().trim();
+    if (strong.includes('Associated Name')) {
+      for (const li of $(el).find('ul li').toArray()) {
+        altTitles.push($(li).text().trim());
+      }
+    }
+  }
+
+  for (const el of $('a[href*="author"]').toArray()) {
+    authors.push($(el).text().trim());
+  }
+
+  for (const el of $('a[href*="included_tag"]').toArray()) {
+    tags.push($(el).text().trim());
+  }
+
+  const type = $('a[href*="included_type"]').first().text().trim() || undefined;
+  const status = $('a[href*="included_status"]').first().text().trim() || undefined;
+
+  let year: string | undefined;
+  const releasedText = $('li:contains("Released")').text().trim();
+  const yearMatch = releasedText.match(/(\d{4})/);
+  if (yearMatch) year = yearMatch[1];
+
+  const chapters: ChapterInfo[] = [];
+  try {
+    const chaptersHtml = await fetchHTML(`${BASE}/series/${id}/full-chapter-list`);
+    const $ch = cheerio.load(chaptersHtml);
+    const chapterLinks = $ch('a[href*="/chapters/"]');
+    chapterLinks.each((_, el) => {
+      const href = $ch(el).attr('href') || '';
+      const match = href.match(/\/chapters\/([^/]+)/);
+      if (!match) return;
+
+      const growSpan = $ch(el).find('span.grow').first();
+      let text = '';
+      if (growSpan.length) {
+        text = growSpan.children('span').first().text().trim();
+      }
+      if (!text) {
+        text = $ch(el).text().trim().split('Last Read')[0].trim();
+      }
+      const date = $ch(el).find('time').attr('datetime') || '';
+      chapters.push({
+        id: match[1],
+        chapter: text.replace(/^Chapter\s+/i, '').trim(),
+        title: text,
+        date,
+      });
+    });
+  } catch (err) {
+    console.error('Error fetching full chapter list:', err);
+  }
+
+  return {
+    id,
+    title,
+    slug: url.split('/').pop() || id,
+    image: coverImg,
+    altTitles, description, authors, tags,
+    type, year, status, chapters,
+  };
+}
+
+export async function getChapterPages(chapterId: string): Promise<ChapterPages> {
+  const url = `${BASE}/chapters/${chapterId}`;
+  const html = await fetchHTML(url);
+  const $ = cheerio.load(html);
+
+  const images: string[] = [];
+
+  // 1. Try to find the first page preload image URL
+  const firstPageUrl = $('link[rel="preload"][as="image"]').first().attr('href');
+  
+  // 2. Try to find the max page count from modal selection buttons
+  const pageNums: number[] = [];
+  $('button').each((_, el) => {
+    const txt = $(el).text().trim();
+    if (/^\d+$/.test(txt)) {
+      pageNums.push(parseInt(txt, 10));
+    }
+  });
+  const maxPage = Math.max(...pageNums, 0);
+
+  if (firstPageUrl && maxPage > 0) {
+    // Generate all page URLs from firstPageUrl and maxPage
+    const match = firstPageUrl.match(/^(.*?)(\d+)(\.[a-zA-Z0-9]+)$/);
+    if (match) {
+      const prefix = match[1];
+      const firstPageNumStr = match[2];
+      const ext = match[3];
+      const paddingLength = firstPageNumStr.length;
+
+      for (let i = 1; i <= maxPage; i++) {
+        const pageStr = String(i).padStart(paddingLength, '0');
+        images.push(`${prefix}${pageStr}${ext}`);
+      }
+    }
+  }
+
+  // Fallback: If generation failed, use original selectors/regex
+  if (images.length === 0) {
+    $('link[rel="preload"][as="image"]').each((_, el) => {
+      const href = $(el).attr('href');
+      if (href && (href.includes('planeptune') || href.includes('lastation') || href.includes('us'))) images.push(href);
+    });
+
+    $('img').each((_, el) => {
+      const src = $(el).attr('src');
+      if (src && (src.includes('planeptune') || src.includes('lastation') || src.includes('us')) && !src.includes('brand.png')) {
+        if (!images.includes(src)) images.push(src);
+      }
+    });
+
+    const imgRegex = /['"]((?:https?:)?\/\/[^'"]*?(?:planeptune|lastation)[^'"]*(?:webp|jpg|jpeg|png))['"]/g;
+    let m;
+    while ((m = imgRegex.exec(html)) !== null) {
+      const url = m[1].startsWith('//') ? 'https:' + m[1] : m[1];
+      if (!images.includes(url)) images.push(url);
+    }
+  }
+
+  let chapterTitle = `Chapter ${chapterId}`;
+  const docTitle = $('title').first().text().trim();
+  if (docTitle && docTitle.includes('|')) {
+    const parts = docTitle.split('|');
+    const chName = parts[0].trim();
+    const seriesName = parts[1]?.trim();
+    if (chName && seriesName) {
+      chapterTitle = `${seriesName} - ${chName}`;
+    } else if (chName) {
+      chapterTitle = chName;
+    }
+  }
+  return { id: chapterId, pages: images, chapterTitle };
+}
+
+export function getCoverUrl(id: string): string {
+  return `${CDN}/fallback/${id}.jpg`;
+}
+
+export function cleanMangaTitle(title: string): string {
+  return title.replace(/\s+cover$/i, '').trim();
+}
+
+
+========================================
+File: src/pages/api/home.ts
+========================================
+import type { APIRoute } from 'astro';
+import { getHomepage } from '../../lib/weebcentral';
+
+export const GET: APIRoute = async () => {
+  try {
+    const data = await getHomepage();
+    return new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    console.error('Homepage error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch homepage' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+
+========================================
+File: src/pages/api/proxy-image.ts
+========================================
+import type { APIRoute } from 'astro';
+
+export const GET: APIRoute = async ({ request }) => {
+  const urlParam = new URL(request.url).searchParams.get('url');
+  if (!urlParam) {
+    return new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const res = await fetch(urlParam, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching remote image`);
+    
+    const contentType = res.headers.get('content-type') || 'image/png';
+    const buffer = await res.arrayBuffer();
+
+    return new Response(buffer, {
+      status: 200,
+      headers: {
+        'Content-Type': contentType,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000',
+      },
+    });
+  } catch (e) {
+    console.error('Proxy image error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch image' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+
+========================================
+File: src/pages/api/search.ts
+========================================
+import type { APIRoute } from 'astro';
+import { searchSeries } from '../../lib/weebcentral';
+
+export const GET: APIRoute = async ({ url }) => {
+  const q = url.searchParams.get('q') || '';
+  if (!q.trim()) {
+    return new Response(JSON.stringify({ results: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const results = await searchSeries(q);
+    return new Response(JSON.stringify({ results }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    console.error('Search error:', e);
+    return new Response(JSON.stringify({ error: 'Search failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+
+========================================
+File: src/pages/api/chapter/[id].ts
+========================================
+import type { APIRoute } from 'astro';
+import { getChapterPages } from '../../../lib/weebcentral';
+
+export const GET: APIRoute = async ({ params }) => {
+  const { id } = params;
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing id' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const pages = await getChapterPages(id);
+    return new Response(JSON.stringify(pages), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    console.error('Chapter pages error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch chapter' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+
+========================================
+File: src/pages/api/series/[id].ts
+========================================
+import type { APIRoute } from 'astro';
+import { getSeriesDetail } from '../../../lib/weebcentral';
+
+export const GET: APIRoute = async ({ params }) => {
+  const { id } = params;
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing id' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const detail = await getSeriesDetail(id);
+    return new Response(JSON.stringify(detail), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (e) {
+    console.error('Series detail error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch series' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+
+========================================
+File: src/pages/read/[id].astro
+========================================
+---
+import Layout from '../../layouts/Layout.astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Reading...">
+  <main>
+    <!-- Toast container for sleek mode notifications -->
+    <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2 items-center"></div>
+
+    <!-- Top toolbar/reader bar -->
+    <div id="reader-bar" class="fixed top-0 right-0 left-0 z-50 flex h-14 items-center justify-between border-b border-hairline bg-canvas/80 px-3 sm:px-4 backdrop-blur-xl supports-[backdrop-filter]:bg-canvas/70 select-none transition-all duration-300">
+      <!-- Left: Back & Title -->
+      <div class="flex items-center gap-1.5 sm:gap-3 min-w-0">
+        <a href="javascript:history.back()" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-canvas-soft text-ink" title="Back">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+        </a>
+        <span id="chapter-title" class="truncate text-xs font-semibold sm:text-sm text-ink max-w-[150px] sm:max-w-md">Loading...</span>
+      </div>
+
+      <!-- Right: Mode Badge, Mode Toggle, and Export -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Mode indicator badge -->
+        <span id="mode-badge" class="hidden sm:inline-flex items-center rounded-full border border-hairline bg-canvas-soft px-2.5 py-0.5 text-[10px] font-mono text-body font-medium">
+          Loading...
+        </span>
+
+        <!-- Reading Mode Toggle with animating icons -->
+        <button id="mode-toggle" class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-canvas-soft relative text-ink cursor-pointer" title="Toggle reading mode">
+          <!-- Continuous (Hamburger) Icon -->
+          <svg id="icon-continuous" class="absolute h-4 w-4 transition-all duration-300 transform scale-100 rotate-0 opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+          <!-- Single Page (Document) Icon -->
+          <svg id="icon-single" class="absolute h-4 w-4 transition-all duration-300 transform scale-50 rotate-90 opacity-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="3" width="16" height="18" rx="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 8h8M8 12h8M8 16h4" />
+          </svg>
+        </button>
+
+        <!-- Export PDF button -->
+        <button id="download-btn" class="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-canvas-soft text-ink cursor-pointer" title="Export PDF">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main reader content area -->
+    <div id="reader-content" class="flex min-h-screen flex-col items-center pb-24 pt-14 px-2 sm:px-4">
+      <div id="pages-container" class="flex w-full flex-col items-center gap-0" data-id={id}>
+        <div class="flex flex-col items-center justify-center py-48 text-center animate-fade-in">
+          <div class="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-hairline bg-canvas shadow-vercel-md mb-6">
+            <svg class="h-8 w-8 text-ink animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+            </svg>
+          </div>
+          <h2 class="text-sm font-semibold tracking-tight text-ink">Retrieving chapter scans...</h2>
+          <p class="text-xs text-mute mt-1.5 font-mono">Initializing connection to WeebCentral</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Unified Floating Controls Bar -->
+    <div id="controls-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex h-11 items-center gap-1.5 rounded-full border border-hairline bg-canvas/80 px-3 py-1 shadow-vercel-modal backdrop-blur-xl supports-[backdrop-filter]:bg-canvas/70 transition-all duration-300 select-none max-w-[95%] sm:max-w-md">
+      <!-- Prev Button -->
+      <button id="prev-btn" class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-canvas-soft-2 text-ink disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" title="Previous page/scroll">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+
+      <!-- Page Indicator -->
+      <span id="page-indicator" class="font-mono text-xs text-ink font-semibold whitespace-nowrap px-1 text-center min-w-[54px]">-- / --</span>
+
+      <!-- Next Button -->
+      <button id="next-btn" class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-canvas-soft-2 text-ink disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" title="Next page/scroll">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+
+      <!-- Divider -->
+      <div class="h-4 w-px bg-hairline"></div>
+
+      <!-- Zoom Out -->
+      <button id="zoom-out" class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-canvas-soft-2 text-ink disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" title="Zoom Out">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+        </svg>
+      </button>
+
+      <!-- Zoom Fit/Reset (Percentage indicator) -->
+      <button id="zoom-fit" class="h-8 px-2.5 flex items-center justify-center rounded-full transition-colors hover:bg-canvas-soft-2 text-[10px] font-mono font-semibold text-mute cursor-pointer" title="Reset Zoom / Fit Page">
+        100%
+      </button>
+
+      <!-- Zoom In -->
+      <button id="zoom-in" class="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-canvas-soft-2 text-ink disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer" title="Zoom In">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- PDF compilation progress modal -->
+    <div id="pdf-progress-modal" class="fixed inset-0 z-[100] hidden items-center justify-center select-none">
+      <div class="absolute inset-0 bg-ink/20 backdrop-blur-sm"></div>
+      <div class="relative w-full max-w-sm rounded-xl border border-hairline bg-canvas p-6 shadow-vercel-modal animate-scale-in text-center mx-4">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-canvas-soft-2 text-ink">
+          <svg class="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <h3 class="mt-4 text-sm font-semibold text-ink">Exporting PDF</h3>
+        <p id="pdf-progress-text" class="mt-2 text-xs text-mute">Initializing downloader...</p>
+        <div class="mt-4 h-1.5 w-full bg-canvas-soft-2 rounded-full overflow-hidden border border-hairline">
+          <div id="pdf-progress-bar" class="h-full bg-ink transition-all duration-300 w-0"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style is:global>
+  #pages-container {
+    --zoom-factor: 1.0;
+  }
+  
+  .page-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    text-align: center;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .page-wrapper::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .page-image {
+    display: inline-block;
+    vertical-align: middle;
+    width: calc(100% * var(--zoom-factor, 1));
+    max-width: calc(800px * var(--zoom-factor, 1));
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid var(--color-hairline);
+    box-shadow: var(--shadow-vercel-sm);
+    transition: width 0.2s ease, max-width 0.2s ease;
+    scroll-margin-top: 5rem;
+  }
+
+  .page-image-fit-height {
+    max-height: calc(100vh - 120px) !important;
+    width: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+</style>
+
+<script>
+  const container = document.getElementById('pages-container');
+  const chapterId = container?.dataset.id || '';
+  const chapterTitle = document.getElementById('chapter-title');
+  const pageIndicator = document.getElementById('page-indicator');
+  
+  const modeToggle = document.getElementById('mode-toggle');
+  const modeBadge = document.getElementById('mode-badge');
+  const readerBar = document.getElementById('reader-bar');
+  const controlsBar = document.getElementById('controls-bar');
+  
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const zoomInBtn = document.getElementById('zoom-in');
+  const zoomOutBtn = document.getElementById('zoom-out');
+  const zoomFitBtn = document.getElementById('zoom-fit');
+
+  let pages: string[] = [];
+  let currentPage = 0;
+  let activePageIdx = 0;
+  let isSingleMode = localStorage.getItem('reader-mode') === 'single';
+  let isFitHeight = localStorage.getItem('reader-fit-height') === 'true';
+  let pageImages: HTMLImageElement[] = [];
+  let scrollObserver: IntersectionObserver | null = null;
+
+  // Zoom levels
+  const zoomFactors = [0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
+  let zoomLevelIdx = parseInt(localStorage.getItem('reader-zoom-level') || '2', 10);
+  if (zoomLevelIdx < 0 || zoomLevelIdx >= zoomFactors.length) zoomLevelIdx = 2; // Default to 1.0
+
+  // ─── TOAST NOTIFICATION HELPERS ───
+  function showToast(message: string) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'px-4 py-2.5 rounded-lg border border-hairline bg-canvas text-ink text-xs font-semibold font-sans shadow-vercel-modal animate-fade-up select-none pointer-events-auto flex items-center gap-2';
+    toast.innerHTML = `
+      <svg class="h-3.5 w-3.5 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.084 1.085l-.041.02H11.25v1.5a.75.75 0 01-1.5 0v-2.25a.75.75 0 01.75-.75h.001zM12 22.5c5.799 0 10.5-4.701 10.5-10.5S17.799 1.5 12 1.5 1.5 6.201 1.5 12 6.201 22.5 12 22.5z" />
+      </svg>
+      <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 2000);
+  }
+
+  // ─── ZOOM CONTROLS ───
+  function applyZoom() {
+    const factor = zoomFactors[zoomLevelIdx];
+    if (container) {
+      container.style.setProperty('--zoom-factor', String(factor));
+    }
+    
+    pageImages.forEach(img => {
+      if (img) {
+        if (isSingleMode && isFitHeight && factor === 1.0) {
+          img.classList.add('page-image-fit-height');
+        } else {
+          img.classList.remove('page-image-fit-height');
+        }
+      }
+    });
+
+    if (zoomFitBtn) {
+      if (isSingleMode && isFitHeight && factor === 1.0) {
+        zoomFitBtn.textContent = 'Fit H';
+      } else {
+        zoomFitBtn.textContent = `${Math.round(factor * 100)}%`;
+      }
+    }
+    
+    if (zoomInBtn) (zoomInBtn as HTMLButtonElement).disabled = zoomLevelIdx === zoomFactors.length - 1;
+    if (zoomOutBtn) (zoomOutBtn as HTMLButtonElement).disabled = zoomLevelIdx === 0;
+    
+    localStorage.setItem('reader-zoom-level', String(zoomLevelIdx));
+  }
+
+  function toggleFitHeight() {
+    if (!isSingleMode) return;
+    isFitHeight = !isFitHeight;
+    localStorage.setItem('reader-fit-height', String(isFitHeight));
+    applyZoom();
+    showToast(isFitHeight ? 'Fitted to page height' : 'Fitted to page width');
+  }
+
+  // ─── OBSERVER FOR SCROLL TRACKING ───
+  function initScrollObserver() {
+    if (scrollObserver) scrollObserver.disconnect();
+    
+    scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const index = parseInt(entry.target.getAttribute('data-index') || '0', 10);
+          activePageIdx = index;
+          if (!isSingleMode) {
+            if (pageIndicator) pageIndicator.textContent = `${activePageIdx + 1} / ${pages.length}`;
+            updateNextPrevBtnStates();
+          }
+        }
+      });
+    }, {
+      root: null,
+      rootMargin: '-30% 0px -40% 0px',
+      threshold: 0
+    });
+
+    pageImages.forEach(img => {
+      if (img) scrollObserver.observe(img);
+    });
+  }
+
+  // ─── NAV AND RENDER UPDATES ───
+  function updatePage() {
+    if (pages.length === 0) return;
+
+    applyZoom();
+
+    // Update Mode text badge
+    if (modeBadge) {
+      modeBadge.textContent = isSingleMode ? 'Single Page' : 'Continuous Scroll';
+    }
+
+    // Toggle icons for mode toggle button
+    const iconContinuous = document.getElementById('icon-continuous');
+    const iconSingle = document.getElementById('icon-single');
+    if (iconContinuous && iconSingle) {
+      if (isSingleMode) {
+        iconContinuous.classList.remove('scale-100', 'opacity-100', 'rotate-0');
+        iconContinuous.classList.add('scale-50', 'opacity-0', 'rotate-90');
+        
+        iconSingle.classList.remove('scale-50', 'opacity-0', '-rotate-90');
+        iconSingle.classList.add('scale-100', 'opacity-100', 'rotate-0');
+      } else {
+        iconContinuous.classList.remove('scale-50', 'opacity-0', 'rotate-90');
+        iconContinuous.classList.add('scale-100', 'opacity-100', 'rotate-0');
+        
+        iconSingle.classList.remove('scale-100', 'opacity-100', 'rotate-0');
+        iconSingle.classList.add('scale-50', 'opacity-0', '-rotate-90');
+      }
+    }
+
+    if (isSingleMode) {
+      pageImages.forEach((img, i) => {
+        const wrapper = img.parentElement;
+        if (wrapper) {
+          wrapper.style.display = i === currentPage ? 'block' : 'none';
+        }
+      });
+      
+      if (scrollObserver) {
+        scrollObserver.disconnect();
+        scrollObserver = null;
+      }
+      
+      if (pageIndicator) pageIndicator.textContent = `${currentPage + 1} / ${pages.length}`;
+      updateNextPrevBtnStates();
+    } else {
+      pageImages.forEach(img => {
+        const wrapper = img.parentElement;
+        if (wrapper) {
+          wrapper.style.display = 'block';
+        }
+      });
+      
+      initScrollObserver();
+      if (pageIndicator) pageIndicator.textContent = `${activePageIdx + 1} / ${pages.length}`;
+      updateNextPrevBtnStates();
+    }
+  }
+
+  function updateNextPrevBtnStates() {
+    const hasPrev = isSingleMode ? currentPage > 0 : activePageIdx > 0;
+    const hasNext = isSingleMode ? currentPage < pages.length - 1 : activePageIdx < pages.length - 1;
+
+    if (prevBtn) {
+      (prevBtn as HTMLButtonElement).disabled = !hasPrev;
+    }
+    if (nextBtn) {
+      (nextBtn as HTMLButtonElement).disabled = !hasNext;
+    }
+  }
+
+  function setMode(single: boolean) {
+    isSingleMode = single;
+    localStorage.setItem('reader-mode', single ? 'single' : 'long');
+    
+    if (!single) {
+      activePageIdx = currentPage;
+      updatePage();
+      setTimeout(() => {
+        pageImages[activePageIdx]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }, 50);
+    } else {
+      currentPage = activePageIdx;
+      updatePage();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+    
+    showToast(isSingleMode ? 'Switched to Single Page' : 'Switched to Continuous Scroll');
+  }
+
+  function goToPrev() {
+    if (isSingleMode) {
+      if (currentPage > 0) {
+        currentPage--;
+        updatePage();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      if (activePageIdx > 0) {
+        activePageIdx--;
+        pageImages[activePageIdx]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
+
+  // Go to next item
+  function goToNext() {
+    if (isSingleMode) {
+      if (currentPage < pages.length - 1) {
+        currentPage++;
+        updatePage();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } else {
+      if (activePageIdx < pages.length - 1) {
+        activePageIdx++;
+        pageImages[activePageIdx]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
+
+  // ─── LOAD CHAPTER AND SETUP ELEMENTS ───
+  async function loadChapter() {
+    try {
+      const res = await fetch(`/api/chapter/${chapterId}`);
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      pages = data.pages || [];
+      if (chapterTitle) {
+        chapterTitle.textContent = data.chapterTitle || `Chapter`;
+      }
+      document.title = `Reading - ${data.chapterTitle || 'Chapter'}`;
+
+      if (pages.length === 0) {
+        if (container) {
+          container.innerHTML = `<div class="flex flex-col items-center gap-3 py-20 text-center"><p class="text-sm text-mute">No pages found</p></div>`;
+        }
+        return;
+      }
+
+      if (container) {
+        container.innerHTML = '';
+      }
+      pageImages = [];
+
+      pages.forEach((url, i) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'page-wrapper select-none my-1';
+        
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `Page ${i + 1}`;
+        img.className = 'page-image';
+        img.loading = i < 2 ? 'eager' : 'lazy';
+        img.setAttribute('data-index', String(i));
+        
+        wrapper.appendChild(img);
+        if (container) {
+          container.appendChild(wrapper);
+        }
+        pageImages.push(img);
+
+        img.onerror = () => {
+          wrapper.innerHTML = `
+            <div class="m-2 flex aspect-[3/4] w-full max-w-[800px] items-center justify-center rounded-lg border border-hairline bg-canvas-soft-2 mx-auto">
+              <p class="text-xs text-mute">Page ${i + 1} failed to load</p>
+            </div>
+          `;
+        };
+      });
+
+      updatePage();
+
+      // Keyboard bindings
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+          e.preventDefault();
+          goToNext();
+        }
+        if (e.key === 'ArrowLeft') {
+          goToPrev();
+        }
+      });
+
+    } catch {
+      if (container) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center gap-4 py-20 text-center">
+            <p class="text-lg font-medium">Failed to load chapter</p>
+            <p class="text-sm text-mute">The chapter may not exist or WeebCentral is unavailable.</p>
+            <a href="/" class="mt-2 inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas">Go home</a>
+          </div>
+        `;
+      }
+    }
+  }
+
+  // ─── TOOLBAR AUTO-HIDE ON SCROLL ───
+  let lastScrollY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    if (isSingleMode) return; // Always keep visible in single page mode
+    
+    const currentScrollY = window.scrollY;
+    if (Math.abs(currentScrollY - lastScrollY) < 12) return;
+    
+    if (currentScrollY > lastScrollY && currentScrollY > 120) {
+      // Scrolling down - hide toolbars
+      readerBar?.classList.add('-translate-y-16', 'opacity-0', 'pointer-events-none');
+      controlsBar?.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+    } else {
+      // Scrolling up - show toolbars
+      readerBar?.classList.remove('-translate-y-16', 'opacity-0', 'pointer-events-none');
+      controlsBar?.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    }
+    lastScrollY = currentScrollY;
+  });
+
+  // Toggle toolbars on backdrop/image clicks
+  document.getElementById('reader-content')?.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a')) {
+      return;
+    }
+    
+    const isHidden = readerBar?.classList.contains('-translate-y-16');
+    if (isHidden) {
+      readerBar?.classList.remove('-translate-y-16', 'opacity-0', 'pointer-events-none');
+      controlsBar?.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    } else {
+      readerBar?.classList.add('-translate-y-16', 'opacity-0', 'pointer-events-none');
+      controlsBar?.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+    }
+  });
+
+  // ─── ZOOM LISTENERS ───
+  zoomInBtn?.addEventListener('click', () => {
+    if (zoomLevelIdx < zoomFactors.length - 1) {
+      zoomLevelIdx++;
+      applyZoom();
+    }
+  });
+
+  zoomOutBtn?.addEventListener('click', () => {
+    if (zoomLevelIdx > 0) {
+      zoomLevelIdx--;
+      applyZoom();
+    }
+  });
+
+  zoomFitBtn?.addEventListener('click', () => {
+    if (isSingleMode) {
+      if (zoomLevelIdx !== 2) {
+        zoomLevelIdx = 2; // Reset to 1.0 (Fit Width)
+        applyZoom();
+      } else {
+        toggleFitHeight(); // Toggle Fit Height
+      }
+    } else {
+      zoomLevelIdx = 2; // Reset zoom to 1.0 (Fit Width)
+      applyZoom();
+    }
+  });
+
+  // ─── NAV CLICK LISTENERS ───
+  prevBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToPrev();
+  });
+  
+  nextBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    goToNext();
+  });
+
+  modeToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setMode(!isSingleMode);
+  });
+
+  // ─── PDF COMPILATION ENGINE ───
+  async function loadAndConvertImage(url: string): Promise<{ dataUrl: string; width: number; height: number }> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas context could not be created'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+          resolve({
+            dataUrl,
+            width: img.naturalWidth,
+            height: img.naturalHeight
+          });
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error('Image fetch failed'));
+      img.src = url;
+    });
+  }
+
+  async function loadAndConvertImageWithRetry(url: string, retries = 3): Promise<{ dataUrl: string; width: number; height: number }> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        return await loadAndConvertImage(url);
+      } catch (err) {
+        if (attempt === retries) throw err;
+        console.warn(`Download retry ${attempt}/${retries} failed for ${url}. Re-trying in 1s...`);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    throw new Error(`Max retries reached for image: ${url}`);
+  }
+
+  downloadBtn?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (pages.length === 0) return;
+    
+    const progressModal = document.getElementById('pdf-progress-modal');
+    const progressText = document.getElementById('pdf-progress-text');
+    const progressBar = document.getElementById('pdf-progress-bar');
+    
+    if (progressModal) {
+      progressModal.classList.remove('hidden');
+      progressModal.classList.add('flex');
+    }
+
+    try {
+      if (!(window as any).jspdf) {
+        if (progressText) progressText.textContent = 'Loading PDF Engine...';
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      }
+
+      interface LoadedImageData {
+        dataUrl?: string;
+        width: number;
+        height: number;
+        isPlaceholder?: boolean;
+        pageNum?: number;
+      }
+
+      const loadedImages: LoadedImageData[] = [];
+      const totalPages = pages.length;
+
+      for (let i = 0; i < totalPages; i++) {
+        if (progressText) progressText.textContent = `Downloading Page ${i + 1} / ${totalPages}...`;
+        if (progressBar) progressBar.style.width = `${((i) / totalPages) * 100}%`;
+
+        const originalUrl = pages[i];
+        const proxiedUrl = `/api/proxy-image?url=${encodeURIComponent(originalUrl)}`;
+        
+        try {
+          const imgData = await loadAndConvertImageWithRetry(proxiedUrl, 3);
+          loadedImages.push(imgData);
+        } catch (err) {
+          console.error(`Page ${i + 1} export failed:`, err);
+          loadedImages.push({
+            isPlaceholder: true,
+            width: 800,
+            height: 1200,
+            pageNum: i + 1
+          });
+        }
+      }
+
+      if (progressText) progressText.textContent = 'Compiling PDF pages...';
+      if (progressBar) progressBar.style.width = '95%';
+
+      const { jsPDF } = (window as any).jspdf;
+      const firstPage = loadedImages[0];
+      const pdf = new jsPDF({
+        orientation: firstPage.width > firstPage.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [firstPage.width, firstPage.height]
+      });
+
+      loadedImages.forEach((imgData, i) => {
+        if (i > 0) {
+          pdf.addPage([imgData.width, imgData.height], imgData.width > imgData.height ? 'l' : 'p');
+        }
+        
+        if (imgData.isPlaceholder) {
+          pdf.setFillColor(245, 245, 245);
+          pdf.rect(0, 0, imgData.width, imgData.height, 'F');
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(24);
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(`Page ${imgData.pageNum} failed to load`, imgData.width / 2, imgData.height / 2, { align: 'center' });
+        } else if (imgData.dataUrl) {
+          pdf.addImage(imgData.dataUrl, 'JPEG', 0, 0, imgData.width, imgData.height);
+        }
+      });
+
+      const title = chapterTitle?.textContent || 'manga-chapter';
+      const cleanFileName = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'chapter';
+      
+      if (progressText) progressText.textContent = 'Saving PDF document...';
+      if (progressBar) progressBar.style.width = '100%';
+      
+      pdf.save(`${cleanFileName}.pdf`);
+      showToast('Exported PDF successfully!');
+
+      setTimeout(() => {
+        if (progressModal) {
+          progressModal.classList.add('hidden');
+          progressModal.classList.remove('flex');
+        }
+      }, 800);
+
+    } catch (err) {
+      console.error('PDF compiling error:', err);
+      if (progressText) progressText.textContent = 'Export compilation failed!';
+      showToast('Export failed. Downloading current page...');
+      
+      try {
+        const link = document.createElement('a');
+        const activeIdx = isSingleMode ? currentPage : activePageIdx;
+        link.download = `${chapterId}-page-${activeIdx + 1}.png`;
+        link.href = pages[activeIdx];
+        link.click();
+      } catch {
+        const activeIdx = isSingleMode ? currentPage : activePageIdx;
+        window.open(pages[activeIdx], '_blank');
+      }
+
+      setTimeout(() => {
+        if (progressModal) {
+          progressModal.classList.add('hidden');
+          progressModal.classList.remove('flex');
+        }
+      }, 2000);
+    }
+  });
+
+  loadChapter();
+</script>
+
+
+========================================
+File: src/pages/series/[id].astro
+========================================
+---
+import Layout from '../../layouts/Layout.astro';
+import Nav from '../../components/Nav.astro';
+import Footer from '../../components/Footer.astro';
+
+const { id } = Astro.params;
+---
+
+<Layout title="Loading...">
+  <Nav />
+  <main class="page-enter mx-auto max-w-7xl px-6 pb-24 pt-4 sm:pt-8 flex-1 w-full">
+    <div id="series-detail" class="w-full" data-id={id}>
+      <!-- Detailed Pulsing Layout Skeleton -->
+      <div class="grid gap-10 md:grid-cols-[300px_1fr] items-start animate-pulse">
+        <!-- Cover Skeleton -->
+        <div class="flex flex-col gap-4">
+          <div class="mx-auto w-full max-w-[240px] md:max-w-none aspect-[3/4] rounded-xl border border-hairline bg-canvas-soft-2 skeleton"></div>
+          <div class="h-4 w-28 bg-canvas-soft-2 rounded mx-auto skeleton"></div>
+          <div class="h-3 w-16 bg-canvas-soft-2 rounded mx-auto skeleton"></div>
+        </div>
+
+        <!-- Info Skeleton -->
+        <div class="space-y-4">
+          <div class="h-8 w-3/4 bg-canvas-soft-2 rounded skeleton"></div>
+          <div class="h-4 w-1/3 bg-canvas-soft-2 rounded skeleton"></div>
+          
+          <div class="flex gap-2">
+            <div class="h-6 w-16 bg-canvas-soft-2 rounded-full skeleton"></div>
+            <div class="h-6 w-20 bg-canvas-soft-2 rounded-full skeleton"></div>
+            <div class="h-6 w-14 bg-canvas-soft-2 rounded-full skeleton"></div>
+          </div>
+          
+          <div class="h-32 w-full bg-canvas-soft-2 rounded-xl mt-6 skeleton"></div>
+          
+          <div class="space-y-3 mt-10">
+            <div class="h-6 w-28 bg-canvas-soft-2 rounded skeleton"></div>
+            <div class="h-10 w-full bg-canvas-soft-2 rounded-xl skeleton"></div>
+            <div class="h-40 w-full bg-canvas-soft-2 rounded-xl skeleton"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Lightbox Modal for Cover Image Expansion -->
+  <div id="lightbox-modal" class="fixed inset-0 z-[150] hidden items-center justify-center bg-black/45 dark:bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300 select-none">
+    <div id="lightbox-card" class="relative max-h-[85vh] max-w-[90vw] md:max-w-[480px] w-full rounded-2xl border border-hairline bg-canvas shadow-vercel-modal flex flex-col overflow-hidden theme-transition transform origin-center">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-hairline px-4 py-3 bg-canvas-soft">
+        <div class="flex flex-col">
+          <span class="text-[10px] font-mono uppercase tracking-wider text-mute">Cover Art</span>
+          <span id="lightbox-title" class="text-sm font-semibold text-ink leading-tight truncate max-w-[240px]">Series Title</span>
+        </div>
+        <button id="lightbox-close" class="flex h-8 w-8 items-center justify-center rounded-full border border-hairline bg-canvas text-ink hover:bg-canvas-soft-2 transition-all cursor-pointer shadow-vercel-sm" aria-label="Close lightbox">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Image Content Container -->
+      <div class="relative flex-grow bg-canvas-soft-2 p-4 flex items-center justify-center overflow-hidden aspect-[3/4]">
+        <img id="lightbox-img" src="" alt="Full Cover" class="h-full w-full object-contain rounded-lg shadow-vercel-md select-none pointer-events-none" />
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-between border-t border-hairline px-4 py-3 bg-canvas-soft">
+        <span id="lightbox-meta" class="text-[11px] font-mono text-mute">Dimensions: ~</span>
+        <button id="lightbox-download" class="inline-flex h-8 items-center justify-center rounded-full bg-ink px-4 text-xs font-medium text-canvas hover:opacity-90 transition-all cursor-pointer shadow-vercel-sm">
+          Open Original
+        </button>
+      </div>
+    </div>
+  </div>
+  <Footer />
+</Layout>
+
+<script>
+  const container = document.getElementById('series-detail');
+  const seriesId = container?.dataset.id || '';
+  const lightbox = document.getElementById('lightbox-modal');
+  const lightboxCard = document.getElementById('lightbox-card');
+  const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
+  const lightboxTitle = document.getElementById('lightbox-title');
+  const lightboxMeta = document.getElementById('lightbox-meta');
+  const lightboxDownload = document.getElementById('lightbox-download');
+
+  let isTransitioning = false;
+
+  function openLightbox(imgSrc: string, title: string) {
+    if (isTransitioning || !lightbox || !lightboxCard || !lightboxImg) return;
+
+    isTransitioning = true;
+    
+    // Set content details
+    if (lightboxTitle) lightboxTitle.textContent = title;
+    lightboxImg.src = imgSrc;
+
+    // Estimate file metadata / dimensions once image loads
+    if (lightboxMeta) lightboxMeta.textContent = "Format: JPEG";
+    lightboxImg.onload = () => {
+      if (lightboxMeta) {
+        lightboxMeta.textContent = `${lightboxImg.naturalWidth} × ${lightboxImg.naturalHeight}`;
+      }
+    };
+
+    // Calculate "First" position
+    const coverContainer = document.getElementById('cover-container');
+    const firstRect = coverContainer ? coverContainer.getBoundingClientRect() : null;
+
+    // Show lightbox container, disable transitions initially to position instantly
+    lightbox.classList.remove('hidden');
+    lightbox.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+
+    // Force style recalculation / layout
+    const lastRect = lightboxCard.getBoundingClientRect();
+
+    if (firstRect) {
+      // "Invert" - transform lightbox card so it matches position and scale of original cover container
+      const deltaX = (firstRect.left + firstRect.width / 2) - (lastRect.left + lastRect.width / 2);
+      const deltaY = (firstRect.top + firstRect.height / 2) - (lastRect.top + lastRect.height / 2);
+      const scaleX = firstRect.width / lastRect.width;
+      const scaleY = firstRect.height / lastRect.height;
+
+      lightboxCard.style.transition = 'none';
+      lightboxCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`;
+      lightbox.classList.add('opacity-0');
+    }
+
+    // Force layout / reflow
+    lightboxCard.offsetHeight;
+
+    // "Play" - transition back to center normal layout
+    requestAnimationFrame(() => {
+      lightbox.classList.remove('opacity-0');
+      lightboxCard.style.transition = 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1)';
+      lightboxCard.style.transform = 'none';
+      
+      setTimeout(() => {
+        isTransitioning = false;
+      }, 450);
+    });
+  }
+
+  function closeLightbox() {
+    if (isTransitioning || !lightbox || !lightboxCard) return;
+
+    isTransitioning = true;
+
+    const coverContainer = document.getElementById('cover-container');
+    const targetRect = coverContainer ? coverContainer.getBoundingClientRect() : null;
+    const currentRect = lightboxCard.getBoundingClientRect();
+
+    if (targetRect) {
+      const deltaX = (targetRect.left + targetRect.width / 2) - (currentRect.left + currentRect.width / 2);
+      const deltaY = (targetRect.top + targetRect.height / 2) - (currentRect.top + currentRect.height / 2);
+      const scaleX = targetRect.width / currentRect.width;
+      const scaleY = targetRect.height / currentRect.height;
+
+      lightbox.classList.add('opacity-0');
+      lightboxCard.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+      lightboxCard.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`;
+    } else {
+      lightbox.classList.add('opacity-0');
+    }
+
+    document.body.style.overflow = '';
+
+    setTimeout(() => {
+      lightbox.classList.remove('flex');
+      lightbox.classList.add('hidden');
+      lightboxCard.style.transform = '';
+      lightboxCard.style.transition = '';
+      isTransitioning = false;
+    }, 400);
+  }
+
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox || (e.target as HTMLElement).closest('#lightbox-close')) {
+      closeLightbox();
+    }
+  });
+
+  lightboxDownload?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (lightboxImg.src) {
+      window.open(lightboxImg.src, '_blank');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  async function loadSeries() {
+    try {
+      const res = await fetch(`/api/series/${seriesId}`);
+      if (!res.ok) throw new Error('Not found');
+      const s = await res.json();
+      document.title = s.title;
+
+      const tags = (s.tags || []).slice(0, 5);
+
+      if (container) {
+        container.innerHTML = `
+          <div class="grid gap-10 md:grid-cols-[300px_1fr] items-start">
+            <!-- Cover -->
+            <div class="flex flex-col gap-4">
+              <div id="cover-container" class="mx-auto w-full max-w-[240px] md:max-w-none aspect-[3/4] overflow-hidden rounded-xl border border-hairline bg-canvas-soft-2 shadow-vercel-md cursor-pointer hover:opacity-90 transition-all duration-300">
+                <img src="${s.image}" alt="${s.title}" class="h-full w-full object-contain" />
+              </div>
+              ${s.year ? `<span class="text-xs font-mono text-mute text-center">${s.year} ${s.status ? `· ${s.status}` : ''}</span>` : ''}
+              ${s.type ? `<span class="text-xs text-mute text-center">${s.type}</span>` : ''}
+            </div>
+
+            <!-- Info -->
+            <div>
+              <h1 class="text-3xl font-semibold tracking-[-0.03em]">${s.title}</h1>
+
+              ${s.altTitles && s.altTitles.length > 0 ? `
+                <p class="mt-1 text-sm text-mute">${s.altTitles.slice(0, 3).join(' · ')}</p>
+              ` : ''}
+
+              ${tags.length > 0 ? `
+                <div class="mt-4 flex flex-wrap gap-2">
+                  ${tags.map(t => `<span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-[11px] text-body">${t}</span>`).join('')}
+                </div>
+              ` : ''}
+
+              ${s.authors && s.authors.length > 0 ? `
+                <p class="mt-4 text-sm text-body">
+                  <span class="font-medium text-ink">Author${s.authors.length > 1 ? 's' : ''}:</span> ${s.authors.join(', ')}
+                </p>
+              ` : ''}
+
+              ${s.description ? `
+                <div class="mt-5 rounded-xl border border-hairline bg-canvas-soft p-5">
+                  <p class="text-sm leading-relaxed text-body">${s.description}</p>
+                </div>
+              ` : ''}
+
+              <!-- Chapters -->
+              <div class="mt-10">
+                <h2 class="mb-4 text-lg font-semibold tracking-[-0.02em]">
+                  Chapters ${s.chapters && s.chapters.length > 0 ? `(${s.chapters.length})` : ''}
+                </h2>
+
+                ${s.chapters && s.chapters.length > 0 ? `
+                  <div class="mb-4 flex gap-2">
+                    <div class="relative flex-1">
+                      <input
+                        id="chapter-search"
+                        type="text"
+                        placeholder="Search chapters..."
+                        class="w-full h-10 px-4 rounded-xl border border-hairline bg-canvas text-sm text-ink placeholder:text-mute focus:outline-none focus:ring-1 focus:ring-ink"
+                      />
+                    </div>
+                    <button id="chapter-sort" class="inline-flex h-10 items-center gap-2 px-4 rounded-xl border border-hairline bg-canvas text-xs font-semibold text-ink hover:bg-canvas-soft transition-all shadow-vercel-sm cursor-pointer" data-sort="desc" title="Toggle sorting order">
+                      <svg id="sort-icon-desc" class="h-3.5 w-3.5 text-mute transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m5.25-.75L17.25 9m0 0L21 12.75M17.25 9v12" />
+                      </svg>
+                      <svg id="sort-icon-asc" class="h-3.5 w-3.5 text-mute transition-transform duration-300 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h5.25m9.75-1.5L17.25 21m0 0L13.5 17.25M17.25 21V9" />
+                      </svg>
+                      <span id="sort-text">Newest</span>
+                    </button>
+                  </div>
+                  <div id="chapters-list" class="divide-y divide-hairline rounded-xl border border-hairline bg-canvas max-h-[600px] overflow-y-auto">
+                    <!-- Chapters rendered dynamically -->
+                  </div>
+                ` : `
+                  <div class="flex items-center justify-center rounded-xl border border-hairline bg-canvas-soft py-12">
+                    <p class="text-sm text-mute">Could not load chapters</p>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Hook up cover click event to open lightbox
+      const coverContainer = document.getElementById('cover-container');
+      coverContainer?.addEventListener('click', () => {
+        openLightbox(s.image, s.title);
+      });
+
+      // Dynamic chapter filter and sorting engine
+      const chaptersContainer = document.getElementById('chapters-list');
+      let currentSort = 'desc';
+      let currentSearch = '';
+
+      function renderChapters() {
+        if (!chaptersContainer || !s.chapters) return;
+
+        // Filter chapters
+        let filtered = s.chapters.filter(ch => {
+          const title = (ch.title || 'Chapter ' + ch.chapter).toLowerCase();
+          return title.includes(currentSearch);
+        });
+
+        // Sort chapters (Original WeebCentral chapters are descending / newest first)
+        let displayList = [...filtered];
+        if (currentSort === 'asc') {
+          displayList.reverse();
+        }
+
+        // Generate items HTML with entrance state classes
+        const itemsHtml = displayList.map(ch => {
+          const originalIdx = s.chapters.findIndex(c => c.id === ch.id);
+          const displayNum = s.chapters.length - originalIdx;
+          
+          return `
+            <a href="/read/${ch.id}" class="chapter-item flex items-center justify-between px-4 py-3 text-sm transition-all duration-300 hover:bg-canvas-soft opacity-0 translate-y-2" data-id="${ch.id}">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-canvas-soft-2 text-[11px] font-mono text-mute">${displayNum}</span>
+                <span class="font-medium text-ink">${ch.title || 'Chapter ' + ch.chapter}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                ${ch.date ? `<span class="text-xs text-mute">${new Date(ch.date).toLocaleDateString()}</span>` : ''}
+                <svg class="h-4 w-4 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+            </a>
+          `;
+        }).join('');
+
+        if (displayList.length === 0) {
+          chaptersContainer.innerHTML = `
+            <div class="flex items-center justify-center py-12">
+              <p class="text-sm text-mute">No chapters match your search</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Smooth transition overlay trigger
+        chaptersContainer.style.opacity = '0';
+        chaptersContainer.style.transform = 'translateY(4px)';
+        chaptersContainer.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+
+        setTimeout(() => {
+          chaptersContainer.innerHTML = itemsHtml;
+          chaptersContainer.style.opacity = '1';
+          chaptersContainer.style.transform = 'translateY(0)';
+
+          // Trigger entrance animation for each item sequentially (staggered effect)
+          const items = chaptersContainer.querySelectorAll('.chapter-item');
+          items.forEach((item, index) => {
+            setTimeout(() => {
+              item.classList.remove('opacity-0', 'translate-y-2');
+              item.classList.add('opacity-100', 'translate-y-0');
+            }, Math.min(index * 15, 300));
+          });
+        }, 150);
+      }
+
+      // Initial render
+      renderChapters();
+
+      // Hook up search filter
+      const searchInput = document.getElementById('chapter-search');
+      searchInput?.addEventListener('input', (e) => {
+        currentSearch = (e.target as HTMLInputElement).value.toLowerCase().trim();
+        renderChapters();
+      });
+
+      // Hook up sort toggle
+      const sortBtn = document.getElementById('chapter-sort');
+      const sortText = document.getElementById('sort-text');
+      const sortIconDesc = document.getElementById('sort-icon-desc');
+      const sortIconAsc = document.getElementById('sort-icon-asc');
+
+      sortBtn?.addEventListener('click', () => {
+        if (currentSort === 'desc') {
+          currentSort = 'asc';
+          if (sortText) sortText.textContent = 'Oldest';
+          sortIconDesc?.classList.add('hidden');
+          sortIconAsc?.classList.remove('hidden');
+        } else {
+          currentSort = 'desc';
+          if (sortText) sortText.textContent = 'Newest';
+          sortIconDesc?.classList.remove('hidden');
+          sortIconAsc?.classList.add('hidden');
+        }
+        renderChapters();
+      });
+
+    } catch {
+      if (container) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center gap-4 py-20 text-center">
+            <p class="text-lg font-medium">Series not found</p>
+            <p class="text-sm text-mute">The series may not exist or WeebCentral is unavailable.</p>
+            <a href="/" class="mt-2 inline-flex h-10 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas">Go home</a>
+          </div>
+        `;
+      }
+    }
+  }
+
+  loadSeries();
+</script>
+
+
+========================================
+File: src/pages/index.astro
+========================================
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Panel — Read Manga, Beautifully">
+  <Nav />
+
+  <main class="flex-1 w-full">
+    <!-- ==================== HERO ==================== -->
+    <section class="relative overflow-hidden border-b border-hairline bg-canvas theme-transition">
+      <div class="mesh-gradient pointer-events-none absolute inset-0 opacity-60 dark:opacity-80" />
+      <div class="pointer-events-none absolute -inset-x-20 -top-40 h-[500px] bg-gradient-to-b from-accent/5 via-transparent to-transparent blur-3xl" />
+
+      <div class="relative mx-auto max-w-7xl px-4 pb-32 pt-24 sm:px-6 md:pb-40 md:pt-32">
+        <div class="grid gap-12 lg:grid-cols-[1fr_400px] lg:gap-16 xl:gap-20">
+          <div class="flex flex-col justify-center">
+            <h1 class="mt-6 animate-fade-up-d1 text-balance text-4xl font-semibold leading-[1.08] tracking-[-0.04em] md:text-5xl lg:text-6xl">
+              Read manga.<br />
+              <span class="text-body">Anywhere.</span>
+            </h1>
+            <p class="mt-5 animate-fade-up-d2 max-w-lg text-[17px] leading-relaxed text-body">
+              A clean, focused reading experience. Browse thousands of manga,
+              manhwa, and manhua — no account needed.
+            </p>
+            <div class="mt-8 animate-fade-up-d3 flex flex-wrap items-center gap-3">
+              <a href="/search" class="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-medium text-canvas transition-all hover:opacity-90 active:scale-[0.97]">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                Browse all manga
+              </a>
+              <button id="hero-search" class="inline-flex h-11 items-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-sm font-medium text-ink transition-all hover:bg-canvas-soft active:scale-[0.97]">
+                Quick search
+                <kbd class="rounded border border-hairline px-1.5 py-0.5 text-[10px] font-mono text-mute">⌘K</kbd>
+              </button>
+            </div>
+          </div>
+
+          <div class="relative hidden lg:flex items-center justify-center min-h-[420px] w-full max-w-[480px]">
+            <div id="hero-covers-stack" class="relative w-full h-[360px]">
+              <div class="absolute left-[10px] top-[60px] w-40 h-60 rotate-[-4deg] z-10 animate-float shadow-vercel-md border border-hairline skeleton rounded-xl" />
+              <div class="absolute left-[160px] top-[15px] w-44 h-66 rotate-[2deg] z-20 animate-float-d2 shadow-vercel-lg border border-hairline skeleton rounded-xl" />
+              <div class="absolute left-[310px] top-[70px] w-40 h-60 rotate-[-2deg] z-10 animate-float-d4 shadow-vercel-md border border-hairline skeleton rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HOT UPDATES ==================== -->
+    <section id="hot-updates" class="border-b border-hairline bg-canvas px-4 py-16 sm:px-6 md:py-20 theme-transition">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-8 reveal flex items-center justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-[10px] font-mono text-body shadow-vercel-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-error/70" />
+              TRENDING NOW
+            </span>
+            <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Hot updates</h2>
+          </div>
+          <a href="/search" class="hidden items-center gap-1 text-sm text-link transition-colors hover:text-link-deep sm:flex">
+            View all
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+          </a>
+        </div>
+        <div id="hot-updates-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 max-w-[1000px] mx-auto">
+          {[1,2,3,4,5,6,7,8,9,10].map(i => (
+            <div class="animate-fade-up overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm max-w-[190px] w-full mx-auto">
+              <div class="skeleton aspect-[3/4] w-full"></div>
+              <div class="space-y-2 p-3">
+                <div class="skeleton h-3 w-full"></div>
+                <div class="skeleton h-2 w-2/3"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== LATEST UPDATES ==================== -->
+    <section class="border-b border-hairline bg-canvas-soft px-4 py-16 sm:px-6 md:py-20 theme-transition">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-8 reveal flex items-center justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas px-3 py-1 text-[10px] font-mono text-body shadow-vercel-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-accent/70" />
+              RECENT RELEASES
+            </span>
+            <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Latest updates</h2>
+          </div>
+        </div>
+        <div id="latest-updates-list" class="space-y-1.5">
+          {[1,2,3,4,5,6,7,8].map(i => (
+            <div class="animate-fade-up flex items-center gap-4 rounded-xl border border-hairline bg-canvas p-4 shadow-vercel-sm">
+              <div class="skeleton h-14 w-10 shrink-0 rounded-lg sm:h-16 sm:w-12"></div>
+              <div class="flex-1 space-y-2">
+                <div class="skeleton h-4 w-48"></div>
+                <div class="skeleton h-3 w-32"></div>
+              </div>
+              <div class="skeleton h-3 w-20 shrink-0"></div>
+            </div>
+          ))}
+        </div>
+        <div id="latest-updates-more-container" class="mt-6 flex justify-center hidden">
+          <button id="btn-show-more-latest" class="inline-flex h-10 items-center gap-2 rounded-full border border-hairline bg-canvas px-6 text-sm font-medium text-ink transition-all hover:bg-canvas-soft active:scale-[0.97] cursor-pointer">
+            <span>Show more updates</span>
+            <svg class="h-4 w-4 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== HOT SERIES ==================== -->
+    <section class="border-b border-hairline bg-canvas px-4 py-16 sm:px-6 md:py-20 theme-transition">
+      <div class="mx-auto max-w-7xl">
+        <div class="mb-8 reveal flex items-center justify-between">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-[10px] font-mono text-body shadow-vercel-sm">
+              <span class="h-1.5 w-1.5 rounded-full bg-warning/70" />
+              POPULAR
+            </span>
+            <h2 class="mt-3 text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Hot series</h2>
+          </div>
+        </div>
+        <div id="hot-series-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {[1,2,3,4,5,6,7,8,9,10].map(i => (
+            <div class="animate-fade-up overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm">
+              <div class="skeleton aspect-[3/4] w-full"></div>
+              <div class="space-y-2 p-3">
+                <div class="skeleton h-3 w-full"></div>
+                <div class="skeleton h-2 w-1/2"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section class="bg-canvas-soft-2 px-4 py-20 text-ink sm:px-6 md:py-28 border-t border-hairline theme-transition">
+      <div class="mx-auto max-w-2xl text-center">
+        <h2 class="text-balance text-3xl font-semibold tracking-[-0.03em] md:text-4xl">Start reading now.</h2>
+        <p class="mx-auto mt-4 max-w-md text-[15px] text-body">No account. No paywalls. Just manga.</p>
+        <a href="/search" class="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-6 text-sm font-medium text-canvas transition-all hover:opacity-90 active:scale-[0.97]">
+          Explore the library
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+        </a>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+</Layout>
+
+<script>
+  document.getElementById('hero-search')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('open-search'));
+  });
+
+  async function loadHomepage() {
+    try {
+      const res = await fetch('/api/home');
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+
+      // Setup hero covers staggered carousel
+      const stackContainer = document.getElementById('hero-covers-stack');
+      const items = (data.recommendations || []).slice(0, 10);
+      if (items.length === 0 && data.hotUpdates?.length) {
+        items.push(...data.hotUpdates.slice(0, 10).map(u => ({
+          id: u.seriesId,
+          title: u.seriesTitle,
+          image: u.cover,
+          slug: u.seriesSlug
+        })));
+      }
+
+      if (stackContainer && items.length >= 3) {
+        stackContainer.innerHTML = '';
+
+        const cardConfigs = [
+          { classes: 'absolute left-[10px] top-[60px] w-40 h-60 rotate-[-4deg] z-10 animate-float', initialIndex: 0 },
+          { classes: 'absolute left-[160px] top-[15px] w-44 h-66 rotate-[2deg] z-20 animate-float-d2', initialIndex: 1 },
+          { classes: 'absolute left-[310px] top-[70px] w-40 h-60 rotate-[-2deg] z-10 animate-float-d4', initialIndex: 2 }
+        ];
+
+        const cardEls = cardConfigs.map((config, i) => {
+          const card = document.createElement('a');
+          card.href = `/series/${items[config.initialIndex].id}`;
+          card.className = `${config.classes} rounded-xl border border-hairline shadow-vercel-md overflow-hidden group transition-all duration-500 ease-in-out hover:rotate-0 hover:-translate-y-2 hover:scale-105 skeleton`;
+          
+          const img = document.createElement('img');
+          img.src = items[config.initialIndex].image;
+          img.alt = items[config.initialIndex].title;
+          img.className = 'w-full h-full object-cover transition-opacity duration-500 opacity-0';
+          img.loading = 'lazy';
+          img.onload = () => {
+            img.classList.remove('opacity-0');
+            card.classList.remove('skeleton');
+          };
+          img.onerror = () => {
+            img.style.display = 'none';
+            card.classList.remove('skeleton', 'animate-pulse');
+            card.innerHTML = `<div class="flex h-full flex-col items-center justify-center p-4 text-center bg-canvas-soft text-mute"><span class="text-xs font-semibold line-clamp-3">${items[config.initialIndex].title}</span></div>`;
+          };
+          
+          card.appendChild(img);
+          stackContainer.appendChild(card);
+          return { card, img };
+        });
+
+        let cycleCardIdx = 0;
+        let nextItemIdx = 3;
+
+        setInterval(() => {
+          if (items.length <= 3) return;
+          
+          const targetCard = cardEls[cycleCardIdx];
+          const nextItem = items[nextItemIdx];
+          
+          targetCard.card.style.opacity = '0';
+          targetCard.card.style.transform = `${targetCard.card.style.transform} scale(0.9) translateY(10px)`;
+          
+          setTimeout(() => {
+            targetCard.card.href = `/series/${nextItem.id}`;
+            targetCard.card.classList.add('skeleton');
+            targetCard.img.classList.add('opacity-0');
+            targetCard.img.src = nextItem.image;
+            targetCard.img.alt = nextItem.title;
+            targetCard.img.onload = () => {
+              targetCard.img.classList.remove('opacity-0');
+              targetCard.card.classList.remove('skeleton');
+            };
+            targetCard.img.onerror = () => {
+              targetCard.img.style.display = 'none';
+              targetCard.card.classList.remove('skeleton', 'animate-pulse');
+              targetCard.card.innerHTML = `<div class="flex h-full flex-col items-center justify-center p-4 text-center bg-canvas-soft text-mute"><span class="text-xs font-semibold line-clamp-3">${nextItem.title}</span></div>`;
+            };
+            
+            setTimeout(() => {
+              targetCard.card.style.opacity = '1';
+              targetCard.card.style.transform = '';
+            }, 50);
+          }, 500);
+
+          cycleCardIdx = (cycleCardIdx + 1) % 3;
+          nextItemIdx = (nextItemIdx + 1) % items.length;
+          if (nextItemIdx < 3) nextItemIdx = 3;
+        }, 4000);
+      }
+
+      const hotGrid = document.getElementById('hot-updates-grid');
+      if (hotGrid && data.hotUpdates?.length) {
+        hotGrid.innerHTML = data.hotUpdates.slice(0, 10).map((u, i) => {
+          const cleanChapter = (u.chapterTitle || '').replace(u.seriesTitle, '').trim() || u.chapterTitle;
+          return `<a href="/read/${u.chapterId}" class="group animate-fade-up-d${i % 7} overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover hover:shadow-vercel-md max-w-[190px] w-full mx-auto">
+            <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+              <img src="${u.cover}" alt="${u.seriesTitle}" class="h-full w-full object-contain transition-all duration-500 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-mute text-xs\\'>No cover</div>'" />
+              
+              <!-- Default Overlay (Legible in light and dark mode) -->
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-8 transition-opacity duration-300 group-hover:opacity-0">
+                <p class="text-xs font-semibold leading-tight text-white line-clamp-1">${u.seriesTitle}</p>
+                <p class="mt-0.5 text-[10px] text-white/80">${cleanChapter}</p>
+              </div>
+              
+              <!-- Hover Overlay (Animated dark pane) -->
+              <div class="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col justify-end p-3 transition-all duration-300 translate-y-2 group-hover:translate-y-0 backdrop-blur-[1.5px] pointer-events-none">
+                <p class="text-xs font-semibold leading-tight text-white line-clamp-2">${u.seriesTitle}</p>
+                <p class="mt-1.5 text-[10px] font-medium text-white/85">${cleanChapter}</p>
+              </div>
+            </div>
+          </a>`;
+        }).join('');
+      }
+
+      const latestList = document.getElementById('latest-updates-list');
+      const moreContainer = document.getElementById('latest-updates-more-container');
+      const moreBtn = document.getElementById('btn-show-more-latest');
+      let latestUpdates = data.latestUpdates || [];
+      let isLatestExpanded = false;
+
+      function renderLatestUpdates() {
+        if (!latestList) return;
+        const visibleUpdates = isLatestExpanded ? latestUpdates.slice(0, 20) : latestUpdates.slice(0, 8);
+        latestList.innerHTML = visibleUpdates.map((u, i) =>
+          `<a href="/read/${u.chapterId}" class="reveal group flex items-center gap-3 sm:gap-4 rounded-xl border border-hairline bg-canvas p-3 sm:p-4 shadow-vercel-sm card-hover hover:shadow-vercel-md">
+            <div class="h-14 w-10 sm:h-16 sm:w-12 shrink-0 overflow-hidden rounded-lg border border-hairline bg-canvas-soft-2">
+              <img src="${u.cover}" alt="${u.seriesTitle}" class="h-full w-full object-cover transition-all duration-300 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-[10px] text-mute\\'>N/A</div>'" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-ink truncate">${u.seriesTitle}</p>
+              <p class="mt-0.5 text-xs text-body truncate">${u.chapterTitle}</p>
+            </div>
+            ${u.date ? `<span class="shrink-0 text-[11px] font-mono text-mute">${timeAgo(u.date)}</span>` : ''}
+            <svg class="h-4 w-4 shrink-0 text-mute transition-all group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m9 12.75 3 3m0 0 3-3m-3 3v-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+          </a>`
+        ).join('');
+
+        if (latestUpdates.length > 8) {
+          moreContainer?.classList.remove('hidden');
+          if (moreBtn) {
+            const btnSpan = moreBtn.querySelector('span');
+            const btnIcon = moreBtn.querySelector('svg');
+            if (btnSpan && btnIcon) {
+              if (isLatestExpanded) {
+                btnSpan.textContent = 'Show less updates';
+                btnIcon.classList.add('rotate-180');
+              } else {
+                btnSpan.textContent = 'Show more updates';
+                btnIcon.classList.remove('rotate-180');
+              }
+            }
+          }
+        } else {
+          moreContainer?.classList.add('hidden');
+        }
+
+        setTimeout(observeReveals, 100);
+      }
+
+      if (latestList && latestUpdates.length) {
+        renderLatestUpdates();
+        moreBtn?.addEventListener('click', () => {
+          isLatestExpanded = !isLatestExpanded;
+          renderLatestUpdates();
+        });
+      }
+
+      const seriesGrid = document.getElementById('hot-series-grid');
+      if (seriesGrid && data.hotSeries?.length) {
+        seriesGrid.innerHTML = data.hotSeries.slice(0, 20).map((s, i) =>
+          `<a href="/series/${s.id}" class="group animate-fade-up-d${i % 7} overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover hover:shadow-vercel-md max-w-[190px] w-full mx-auto">
+            <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+              <img src="https://temp.compsci88.com/cover/fallback/${s.id}.jpg" alt="${s.title}" class="h-full w-full object-contain transition-all duration-500 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-xs text-mute\\'>${s.title[0]}</div>'" />
+            </div>
+            <div class="p-3">
+              <h3 class="text-sm font-semibold leading-tight tracking-tight text-ink line-clamp-2">${s.title}</h3>
+            </div>
+          </a>`
+        ).join('');
+      }
+
+    } catch (e) {
+      document.querySelectorAll('#hot-updates-grid, #latest-updates-list, #hot-series-grid').forEach(el => {
+        if (el) el.innerHTML = '<div class="col-span-full py-16 text-center text-sm text-mute">Could not load content.</div>';
+      });
+    }
+  }
+
+  function timeAgo(d) {
+    if (!d) return '';
+    const diff = Date.now() - new Date(d).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'now';
+    if (m < 60) return m + 'm';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + 'h';
+    const days = Math.floor(h / 24);
+    if (days < 7) return days + 'd';
+    return new Date(d).toLocaleDateString();
+  }
+
+  let observer;
+  function observeReveals() {
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); observer.unobserve(e.target); } });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal:not(.revealed)').forEach(el => observer.observe(el));
+  }
+
+  document.addEventListener('DOMContentLoaded', observeReveals);
+  setTimeout(observeReveals, 500);
+  loadHomepage();
+</script>
+
+
+========================================
+File: src/pages/search.astro
+========================================
+---
+import Layout from '../layouts/Layout.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+const query = Astro.url.searchParams.get('q') || '';
+---
+
+<Layout title={query ? `Search: ${query}` : 'Browse Manga'}>
+  <Nav />
+
+  <main class="page-enter mx-auto max-w-7xl px-4 pb-24 pt-8 sm:px-6 flex-1 w-full">
+    <div class="mb-8 reveal">
+      <h1 id="search-title" class="text-3xl font-semibold tracking-[-0.03em]">
+        {query ? `Results for "${query}"` : 'Browse manga'}
+      </h1>
+      <p id="search-desc" class="mt-1.5 text-sm text-body">
+        {query ? 'Search results from WeebCentral' : 'Discover series from the WeebCentral library'}
+      </p>
+    </div>
+
+    <div class="mb-10 reveal">
+      <form action="/search" method="GET" class="relative mx-auto max-w-xl">
+        <svg class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+        <input name="q" id="search-page-input" type="text" placeholder="Search manga..." value={query} autocomplete="off"
+          class="h-12 w-full rounded-xl border border-hairline bg-canvas pl-11 pr-4 text-sm text-ink placeholder:text-mute shadow-vercel-sm transition-colors focus:border-hairline-strong focus:outline-none focus:shadow-vercel-md" />
+      </form>
+    </div>
+
+    <div id="search-grid" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {query && (
+        <div class="col-span-full flex items-center justify-center py-32">
+          <div class="flex flex-col items-center gap-4">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-hairline-strong border-t-ink"></div>
+            <p class="text-sm text-mute animate-fade-in">Searching...</p>
+          </div>
+        </div>
+      )}
+      {!query && (
+        <div class="col-span-full reveal flex flex-col items-center gap-4 py-24 text-center">
+          <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-hairline bg-canvas shadow-vercel-sm">
+            <svg class="h-7 w-7 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-base font-medium text-ink">Search for any manga</p>
+            <p class="mt-1 text-sm text-mute">Thousands of series from WeebCentral's library</p>
+          </div>
+          <div class="flex gap-3 text-[11px] font-mono text-mute">
+            <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "One Piece"</span>
+            <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "Jujutsu"</span>
+            <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "Solo Leveling"</span>
+          </div>
+        </div>
+      )}
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  const grid = document.getElementById('search-grid');
+  const input = document.getElementById('search-page-input');
+  const title = document.getElementById('search-title');
+  const desc = document.getElementById('search-desc');
+  const form = document.querySelector('form');
+
+  let debounceTimer;
+
+  const WELCOME_HTML = `
+    <div class="col-span-full flex flex-col items-center gap-4 py-24 text-center animate-fade-up">
+      <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-hairline bg-canvas shadow-vercel-sm">
+        <svg class="h-7 w-7 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-base font-medium text-ink">Search for any manga</p>
+        <p class="mt-1 text-sm text-mute">Thousands of series from WeebCentral's library</p>
+      </div>
+      <div class="flex gap-3 text-[11px] font-mono text-mute animate-fade-in">
+        <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "One Piece"</span>
+        <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "Jujutsu"</span>
+        <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "Solo Leveling"</span>
+      </div>
+    </div>
+  `;
+
+  function bindPills() {
+    document.querySelectorAll('.search-pill').forEach(pill => {
+      pill.addEventListener('click', () => {
+        const text = pill.textContent.replace(/^Try\s+["']|["']$/g, '').trim();
+        if (input) {
+          input.value = text;
+          performSearch(text);
+          input.focus();
+        }
+      });
+    });
+  }
+
+  form?.addEventListener('submit', (e) => {
+    e.preventDefault();
+  });
+
+  async function performSearch(query) {
+    // Update URL params
+    const url = new URL(window.location.href);
+    if (query) {
+      url.searchParams.set('q', query);
+    } else {
+      url.searchParams.delete('q');
+    }
+    window.history.replaceState({}, '', url.pathname + url.search);
+
+    // Update headings
+    if (title && desc) {
+      if (query) {
+        title.textContent = `Results for "${query}"`;
+        desc.textContent = 'Search results from WeebCentral';
+        document.title = `Search: ${query}`;
+      } else {
+        title.textContent = 'Browse manga';
+        desc.textContent = 'Discover series from the WeebCentral library';
+        document.title = 'Browse Manga';
+      }
+    }
+
+    if (query.trim().length < 2) {
+      if (grid) {
+        grid.innerHTML = WELCOME_HTML;
+        bindPills();
+      }
+      return;
+    }
+
+    if (grid) {
+      grid.innerHTML = `
+        <div class="col-span-full flex items-center justify-center py-32">
+          <div class="flex flex-col items-center gap-4">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-hairline-strong border-t-ink"></div>
+            <p class="text-sm text-mute animate-fade-in">Searching...</p>
+          </div>
+        </div>
+      `;
+    }
+
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+
+      if (grid) {
+        if (data.results?.length > 0) {
+          grid.innerHTML = data.results.map((r, i) =>
+            `<a href="/series/${r.id}" class="group animate-fade-up-d${i % 7} overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover hover:shadow-vercel-md max-w-[190px] w-full mx-auto">
+              <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+                <img src="${r.image}" alt="${r.title}" class="h-full w-full object-contain transition-all duration-500 group-hover:scale-105" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'flex h-full items-center justify-center text-mute text-xs\\'>No cover</div>'" />
+                ${r.status ? `<span class="absolute left-2 top-2 rounded-full border border-white/20 bg-ink/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">${r.status}</span>` : ''}
+              </div>
+              <div class="flex flex-col gap-1 p-3.5">
+                <h3 class="text-sm font-semibold leading-tight text-ink line-clamp-2">${r.title}</h3>
+                ${r.year ? `<span class="text-[11px] font-mono text-mute">${r.year}</span>` : ''}
+              </div>
+            </a>`
+          ).join('');
+        } else {
+          grid.innerHTML = `
+            <div class="col-span-full flex flex-col items-center gap-4 py-24 text-center animate-fade-up">
+              <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-hairline bg-canvas shadow-vercel-sm">
+                <svg class="h-7 w-7 text-mute" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div>
+                <p class="text-base font-medium text-ink">No results found</p>
+                <p class="mt-1 text-sm text-mute">Nothing for "${query}" — try a different search term</p>
+              </div>
+              <div class="flex gap-3 text-[11px] font-mono text-mute animate-fade-in">
+                <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "One Piece"</span>
+                <span class="rounded-full border border-hairline bg-canvas-soft px-3 py-1 cursor-pointer hover:bg-canvas-soft-2 hover:text-ink transition-colors search-pill">Try "Berserk"</span>
+              </div>
+            </div>`;
+          bindPills();
+        }
+      }
+    } catch {
+      if (grid) {
+        grid.innerHTML = `
+          <div class="col-span-full flex flex-col items-center gap-4 py-24 text-center animate-fade-up">
+            <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-hairline bg-canvas shadow-vercel-sm">
+              <svg class="h-7 w-7 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+              </svg>
+            </div>
+            <p class="text-base font-medium text-ink">Search failed</p>
+            <p class="text-sm text-mute">Something went wrong. Please try again.</p>
+          </div>`;
+      }
+    }
+  }
+
+  input?.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    const val = e.target.value;
+    debounceTimer = setTimeout(() => {
+      performSearch(val.trim());
+    }, 250);
+  });
+
+  // Scroll reveals
+  let observer;
+  function observeReveals() {
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('revealed');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal:not(.revealed)').forEach(el => observer.observe(el));
+  }
+
+  // Init
+  const initialQ = new URLSearchParams(window.location.search).get('q') || '';
+  if (initialQ.trim().length >= 2) {
+    performSearch(initialQ.trim());
+  } else {
+    bindPills();
+  }
+  observeReveals();
+</script>
+
+
+========================================
+File: src/styles/global.css
+========================================
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #171717;
+  --color-canvas: #ffffff;
+  --color-canvas-soft: #fafafa;
+  --color-canvas-soft-2: #f5f5f5;
+  --color-body: #4d4d4d;
+  --color-mute: #888888;
+  --color-hairline: #ebebeb;
+  --color-hairline-strong: #a1a1a1;
+  --color-link: #0070f3;
+  --color-link-deep: #0761d1;
+  --color-link-bg-soft: #d3e5ff;
+  --color-success: #0070f3;
+  --color-error: #ee0000;
+  --color-error-soft: #f7d4d6;
+  --color-error-deep: #c50000;
+  --color-warning: #f5a623;
+  --color-warning-soft: #ffefcf;
+  --color-warning-deep: #ab570a;
+  --color-violet: #7928ca;
+  --color-violet-soft: #d8ccf1;
+  --color-violet-deep: #4c2889;
+  --color-cyan: #50e3c2;
+  --color-highlight-pink: #ff0080;
+
+  --color-accent: #0070f3;
+  --color-accent-soft: #d3e5ff;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+
+  --shadow-vercel-sm: 0px 1px 1px rgba(0,0,0,0.03), 0px 1px 2px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.05) inset;
+  --shadow-vercel-md: 0px 2px 2px rgba(0,0,0,0.04), 0px 4px 8px -4px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.05) inset;
+  --shadow-vercel-lg: 0px 2px 2px rgba(0,0,0,0.04), 0px 8px 16px -4px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.05) inset;
+  --shadow-vercel-modal: 0px 1px 1px rgba(0,0,0,0.03), 0px 8px 16px -4px rgba(0,0,0,0.04), 0px 24px 32px -8px rgba(0,0,0,0.06), 0px 0px 0px 1px rgba(0,0,0,0.06) inset;
+}
+
+.dark {
+  --color-ink: #ededed;
+  --color-canvas: #0a0a0b;
+  --color-canvas-soft: #111113;
+  --color-canvas-soft-2: #1a1a1d;
+  --color-body: #a1a1aa;
+  --color-mute: #71717a;
+  --color-hairline: #27272a;
+  --color-hairline-strong: #3f3f46;
+  --color-link: #3291ff;
+  --color-link-deep: #70b2ff;
+  --color-accent: #3291ff;
+  --color-accent-soft: #1a2d4a;
+  --color-error: #ef4444;
+  --color-error-soft: #2a1a1a;
+  --shadow-vercel-sm: 0px 1px 1px rgba(255,255,255,0.03), 0px 1px 2px rgba(255,255,255,0.04), 0px 0px 0px 1px rgba(255,255,255,0.04) inset;
+  --shadow-vercel-md: 0px 2px 2px rgba(255,255,255,0.03), 0px 4px 8px -4px rgba(255,255,255,0.04), 0px 0px 0px 1px rgba(255,255,255,0.04) inset;
+  --shadow-vercel-lg: 0px 2px 2px rgba(255,255,255,0.03), 0px 8px 16px -4px rgba(255,255,255,0.04), 0px 0px 0px 1px rgba(255,255,255,0.04) inset;
+  --shadow-vercel-modal: 0px 1px 1px rgba(255,255,255,0.03), 0px 8px 16px -4px rgba(255,255,255,0.04), 0px 24px 32px -8px rgba(255,255,255,0.06), 0px 0px 0px 1px rgba(255,255,255,0.04) inset;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-canvas-soft);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  ::selection {
+    background-color: var(--color-ink);
+    color: var(--color-canvas);
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-hairline); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-hairline-strong); }
+}
+
+@layer utilities {
+  .mesh-gradient {
+    background-image:
+      radial-gradient(ellipse 80% 80% at 20% 10%, rgba(0,112,243,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 80% 20%, rgba(121,40,202,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 50% 80%, rgba(80,227,194,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 70%, rgba(255,0,128,0.06) 0%, transparent 60%);
+  }
+
+  .dark .mesh-gradient {
+    opacity: 0.7;
+    background-image:
+      radial-gradient(ellipse 80% 80% at 20% 10%, rgba(0,112,243,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 80% 20%, rgba(121,40,202,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 50% 80%, rgba(80,227,194,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 70%, rgba(255,0,128,0.1) 0%, transparent 60%);
+  }
+
+  .text-balance { text-wrap: balance; }
+
+  .card-hover {
+    transition: transform 0.25s cubic-bezier(0.16,1,0.3,1),
+                box-shadow 0.25s cubic-bezier(0.16,1,0.3,1),
+                border-color 0.2s ease;
+    will-change: transform;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-3px);
+  }
+
+  /* ===== Animations ===== */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-10px) rotate(0.5deg); }
+    66% { transform: translateY(-5px) rotate(-0.3deg); }
+  }
+
+  @keyframes float-delayed {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-14px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  @keyframes scroll-reveal {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .animate-fade-up { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-fade-up-d1 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.08s both; }
+  .animate-fade-up-d2 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.16s both; }
+  .animate-fade-up-d3 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.24s both; }
+  .animate-fade-up-d4 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.32s both; }
+  .animate-fade-up-d5 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.4s both; }
+  .animate-fade-up-d6 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.48s both; }
+  .animate-fade-up-d7 { animation: fade-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.56s both; }
+
+  .animate-fade-in { animation: fade-in 0.4s ease both; }
+  .animate-scale-in { animation: scale-in 0.3s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-slide-in-right { animation: slide-in-right 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-slide-in-left { animation: slide-in-left 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-float-d2 { animation: float-delayed 7s ease-in-out 1s infinite; }
+  .animate-float-d4 { animation: float-delayed 8s ease-in-out 2s infinite; }
+  .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.05) 50%, transparent 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite linear;
+  }
+
+  /* Scroll reveal via Intersection Observer */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
+                transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Dark mode transition for specific elements */
+  .theme-transition {
+    transition: background-color 0.3s ease,
+                color 0.3s ease,
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+  }
+
+  /* Skeleton loader */
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-canvas-soft-2) 25%, var(--color-canvas) 50%, var(--color-canvas-soft-2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 6px;
+  }
+}
+
+.page-enter {
+  animation: fade-up 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* View Transition Theme Ripple */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Scoped to AnimatedThemeToggler — the toggler sets the data-attribute and the variable only during a theme toggle. */
+html[data-magicui-theme-vt="active"]::view-transition-group(root) {
+  animation-duration: var(--magicui-theme-toggle-vt-duration);
+}
+
+/* Disable style transitions during view-transition repaints to lock 60fps */
+.no-transitions,
+.no-transitions *,
+.no-transitions *::before,
+.no-transitions *::after {
+  transition: none !important;
+  animation-duration: 0s !important;
+}
+
+

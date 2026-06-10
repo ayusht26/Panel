@@ -187,7 +187,8 @@ export async function getHomepage(): Promise<HomepageData> {
     if (!id) return;
     const img = $(el).find('img[src*="temp.compsci88.com"]').first();
     const cover = img.attr('src') || img.attr('data-src') || '';
-    const title = $(el).find('img').attr('alt') || $(el).text().trim() || '';
+    const rawTitle = $(el).find('img').attr('alt') || $(el).text().trim() || '';
+    const title = cleanMangaTitle(rawTitle);
     if (title && !recommendations.some(r => r.id === id)) {
       recommendations.push({
         id, title, slug: href.split('/').pop() || '',
@@ -204,7 +205,8 @@ export async function getHomepage(): Promise<HomepageData> {
       if (!id || recommendations.some(r => r.id === id)) return;
       const img = $(el).find('img[src*="temp.compsci88.com"]').first();
       const cover = img.attr('src') || img.attr('data-src') || '';
-      const title = $(el).find('img').attr('alt') || '';
+      const rawTitle = $(el).find('img').attr('alt') || '';
+      const title = cleanMangaTitle(rawTitle);
       if (title) {
         recommendations.push({
           id, title, slug: href.split('/').pop() || '',
@@ -242,7 +244,7 @@ export async function searchSeries(query: string): Promise<SeriesResult[]> {
     const src = img.attr('src') || img.attr('data-src') || '';
     results.push({
       id,
-      title: img.attr('alt') || match[2].replace(/-/g, ' '),
+      title: cleanMangaTitle(img.attr('alt') || match[2].replace(/-/g, ' ')),
       slug: match[2],
       image: src || getCoverUrl(id),
     });
@@ -389,10 +391,25 @@ export async function getChapterPages(chapterId: string): Promise<ChapterPages> 
     }
   }
 
-  const chapterTitle = $('h1').first().text().trim() || `Chapter ${chapterId}`;
+  let chapterTitle = `Chapter ${chapterId}`;
+  const docTitle = $('title').first().text().trim();
+  if (docTitle && docTitle.includes('|')) {
+    const parts = docTitle.split('|');
+    const chName = parts[0].trim();
+    const seriesName = parts[1]?.trim();
+    if (chName && seriesName) {
+      chapterTitle = `${seriesName} - ${chName}`;
+    } else if (chName) {
+      chapterTitle = chName;
+    }
+  }
   return { id: chapterId, pages: images, chapterTitle };
 }
 
 export function getCoverUrl(id: string): string {
   return `${CDN}/fallback/${id}.jpg`;
+}
+
+export function cleanMangaTitle(title: string): string {
+  return title.replace(/\s+cover$/i, '').trim();
 }
