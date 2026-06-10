@@ -51,6 +51,10 @@ const { id } = Astro.params;
           <svg id="icon-continuous" class="absolute h-4 w-4 transition-all duration-300 transform scale-100 rotate-0 opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
+          <!-- Continuous Strip Icon -->
+          <svg id="icon-strip" class="absolute h-4 w-4 transition-all duration-300 transform scale-50 rotate-90 opacity-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 3h6v18H9V3z M9 9h6 M9 15h6" />
+          </svg>
           <!-- Single Page (Document) Icon -->
           <svg id="icon-single" class="absolute h-4 w-4 transition-all duration-300 transform scale-50 rotate-90 opacity-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <rect x="4" y="3" width="16" height="18" rx="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -180,6 +184,21 @@ const { id } = Astro.params;
     max-width: 100% !important;
     object-fit: contain !important;
   }
+
+  #pages-container.mode-strip .page-wrapper {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  #pages-container.mode-strip .page-image {
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 auto !important;
+    display: block !important;
+  }
 </style>
 
 <script>
@@ -206,7 +225,10 @@ const { id } = Astro.params;
   let pages: string[] = [];
   let currentPage = 0;
   let activePageIdx = 0;
-  let isSingleMode = localStorage.getItem('reader-mode') === 'single';
+  let readerMode = localStorage.getItem('reader-mode') || 'long';
+  if (readerMode !== 'single' && readerMode !== 'long' && readerMode !== 'strip') {
+    readerMode = 'long';
+  }
   let isFitHeight = localStorage.getItem('reader-fit-height') === 'true';
   let pageImages: HTMLImageElement[] = [];
   let scrollObserver: IntersectionObserver | null = null;
@@ -249,7 +271,7 @@ const { id } = Astro.params;
     
     pageImages.forEach(img => {
       if (img) {
-        if (isSingleMode && isFitHeight && factor === 1.0) {
+        if (readerMode === 'single' && isFitHeight && factor === 1.0) {
           img.classList.add('page-image-fit-height');
         } else {
           img.classList.remove('page-image-fit-height');
@@ -258,7 +280,7 @@ const { id } = Astro.params;
     });
 
     if (zoomFitBtn) {
-      if (isSingleMode && isFitHeight && factor === 1.0) {
+      if (readerMode === 'single' && isFitHeight && factor === 1.0) {
         zoomFitBtn.textContent = 'Fit H';
       } else {
         zoomFitBtn.textContent = `${Math.round(factor * 100)}%`;
@@ -272,7 +294,7 @@ const { id } = Astro.params;
   }
 
   function toggleFitHeight() {
-    if (!isSingleMode) return;
+    if (readerMode !== 'single') return;
     isFitHeight = !isFitHeight;
     localStorage.setItem('reader-fit-height', String(isFitHeight));
     applyZoom();
@@ -288,7 +310,7 @@ const { id } = Astro.params;
         if (entry.isIntersecting) {
           const index = parseInt(entry.target.getAttribute('data-index') || '0', 10);
           activePageIdx = index;
-          if (!isSingleMode) {
+          if (readerMode !== 'single') {
             if (pageIndicator) pageIndicator.textContent = `${activePageIdx + 1} / ${pages.length}`;
             updateNextPrevBtnStates();
           }
@@ -311,31 +333,62 @@ const { id } = Astro.params;
 
     applyZoom();
 
+    // Set container class for strip mode
+    if (container) {
+      if (readerMode === 'strip') {
+        container.classList.add('mode-strip');
+      } else {
+        container.classList.remove('mode-strip');
+      }
+    }
+
     // Update Mode text badge
     if (modeBadge) {
-      modeBadge.textContent = isSingleMode ? 'Single Page' : 'Continuous Scroll';
+      if (readerMode === 'single') {
+        modeBadge.textContent = 'Single Page';
+      } else if (readerMode === 'strip') {
+        modeBadge.textContent = 'Continuous Strip';
+      } else {
+        modeBadge.textContent = 'Continuous Scroll';
+      }
     }
 
     // Toggle icons for mode toggle button
     const iconContinuous = document.getElementById('icon-continuous');
+    const iconStrip = document.getElementById('icon-strip');
     const iconSingle = document.getElementById('icon-single');
-    if (iconContinuous && iconSingle) {
-      if (isSingleMode) {
+    if (iconContinuous && iconStrip && iconSingle) {
+      if (readerMode === 'single') {
         iconContinuous.classList.remove('scale-100', 'opacity-100', 'rotate-0');
         iconContinuous.classList.add('scale-50', 'opacity-0', 'rotate-90');
         
-        iconSingle.classList.remove('scale-50', 'opacity-0', '-rotate-90');
+        iconStrip.classList.remove('scale-100', 'opacity-100', 'rotate-0');
+        iconStrip.classList.add('scale-50', 'opacity-0', 'rotate-90');
+
+        iconSingle.classList.remove('scale-50', 'opacity-0', '-rotate-90', 'rotate-90');
         iconSingle.classList.add('scale-100', 'opacity-100', 'rotate-0');
-      } else {
-        iconContinuous.classList.remove('scale-50', 'opacity-0', 'rotate-90');
-        iconContinuous.classList.add('scale-100', 'opacity-100', 'rotate-0');
+      } else if (readerMode === 'strip') {
+        iconContinuous.classList.remove('scale-100', 'opacity-100', 'rotate-0');
+        iconContinuous.classList.add('scale-50', 'opacity-0', 'rotate-90');
         
         iconSingle.classList.remove('scale-100', 'opacity-100', 'rotate-0');
-        iconSingle.classList.add('scale-50', 'opacity-0', '-rotate-90');
+        iconSingle.classList.add('scale-50', 'opacity-0', 'rotate-90');
+
+        iconStrip.classList.remove('scale-50', 'opacity-0', '-rotate-90', 'rotate-90');
+        iconStrip.classList.add('scale-100', 'opacity-100', 'rotate-0');
+      } else { // 'long'
+        iconStrip.classList.remove('scale-100', 'opacity-100', 'rotate-0');
+        iconStrip.classList.add('scale-50', 'opacity-0', 'rotate-90');
+
+        iconSingle.classList.remove('scale-100', 'opacity-100', 'rotate-0');
+        iconSingle.classList.add('scale-50', 'opacity-0', '-rotate-90', 'rotate-90');
+
+        iconContinuous.classList.remove('scale-50', 'opacity-0', 'rotate-90');
+        iconContinuous.classList.add('scale-100', 'opacity-100', 'rotate-0');
       }
     }
 
-    if (isSingleMode) {
+    if (readerMode === 'single') {
       pageImages.forEach((img, i) => {
         const wrapper = img.parentElement;
         if (wrapper) {
@@ -365,8 +418,8 @@ const { id } = Astro.params;
   }
 
   function updateNextPrevBtnStates() {
-    const hasPrev = isSingleMode ? currentPage > 0 : activePageIdx > 0;
-    const hasNext = isSingleMode ? currentPage < pages.length - 1 : activePageIdx < pages.length - 1;
+    const hasPrev = readerMode === 'single' ? currentPage > 0 : activePageIdx > 0;
+    const hasNext = readerMode === 'single' ? currentPage < pages.length - 1 : activePageIdx < pages.length - 1;
 
     if (prevBtn) {
       (prevBtn as HTMLButtonElement).disabled = !hasPrev;
@@ -376,11 +429,11 @@ const { id } = Astro.params;
     }
   }
 
-  function setMode(single: boolean) {
-    isSingleMode = single;
-    localStorage.setItem('reader-mode', single ? 'single' : 'long');
+  function setMode(mode: 'single' | 'long' | 'strip') {
+    readerMode = mode;
+    localStorage.setItem('reader-mode', mode);
     
-    if (!single) {
+    if (mode !== 'single') {
       activePageIdx = currentPage;
       updatePage();
       setTimeout(() => {
@@ -392,11 +445,14 @@ const { id } = Astro.params;
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
     
-    showToast(isSingleMode ? 'Switched to Single Page' : 'Switched to Continuous Scroll');
+    let modeText = 'Continuous Scroll';
+    if (mode === 'single') modeText = 'Single Page';
+    if (mode === 'strip') modeText = 'Continuous Strip';
+    showToast(`Switched to ${modeText}`);
   }
 
   function goToPrev() {
-    if (isSingleMode) {
+    if (readerMode === 'single') {
       if (currentPage > 0) {
         currentPage--;
         updatePage();
@@ -412,7 +468,7 @@ const { id } = Astro.params;
 
   // Go to next item
   function goToNext() {
-    if (isSingleMode) {
+    if (readerMode === 'single') {
       if (currentPage < pages.length - 1) {
         currentPage++;
         updatePage();
@@ -442,22 +498,38 @@ const { id } = Astro.params;
         const seriesId = data.seriesId;
         if (seriesId) {
           try {
-            const stored = sessionStorage.getItem('ch-seq-' + seriesId);
+            let stored = sessionStorage.getItem('ch-seq-' + seriesId);
+            if (!stored) {
+              const resSeries = await fetch(`/api/series/${seriesId}?includeChapters=all`);
+              if (resSeries.ok) {
+                const seriesData = await resSeries.json();
+                const allCh = seriesData.chapters || [];
+                stored = JSON.stringify(allCh.map((c: any) => c.id));
+                sessionStorage.setItem('ch-seq-' + seriesId, stored);
+              }
+            }
             if (stored) {
               const seq: string[] = JSON.parse(stored);
               const idx = seq.indexOf(chapterId);
-              if (idx > 0) {
-                prevChapterBtn.href = `/read/${seq[idx - 1]}`;
-                prevChapterBtn.classList.remove('opacity-30', 'pointer-events-none');
+              if (idx !== -1) {
+                if (idx < seq.length - 1) {
+                  prevChapterBtn.href = `/read/${seq[idx + 1]}`;
+                  prevChapterBtn.classList.remove('opacity-30', 'pointer-events-none');
+                } else {
+                  prevChapterBtn.removeAttribute('href');
+                  prevChapterBtn.classList.add('opacity-30', 'pointer-events-none');
+                }
+                if (idx > 0) {
+                  nextChapterBtn.href = `/read/${seq[idx - 1]}`;
+                  nextChapterBtn.classList.remove('opacity-30', 'pointer-events-none');
+                } else {
+                  nextChapterBtn.removeAttribute('href');
+                  nextChapterBtn.classList.add('opacity-30', 'pointer-events-none');
+                }
               } else {
                 prevChapterBtn.removeAttribute('href');
-                prevChapterBtn.classList.add('opacity-30', 'pointer-events-none');
-              }
-              if (idx >= 0 && idx < seq.length - 1) {
-                nextChapterBtn.href = `/read/${seq[idx + 1]}`;
-                nextChapterBtn.classList.remove('opacity-30', 'pointer-events-none');
-              } else {
                 nextChapterBtn.removeAttribute('href');
+                prevChapterBtn.classList.add('opacity-30', 'pointer-events-none');
                 nextChapterBtn.classList.add('opacity-30', 'pointer-events-none');
               }
             } else {
@@ -466,7 +538,8 @@ const { id } = Astro.params;
               prevChapterBtn.classList.add('opacity-30', 'pointer-events-none');
               nextChapterBtn.classList.add('opacity-30', 'pointer-events-none');
             }
-          } catch {
+          } catch (err) {
+            console.error('Failed to resolve chapter sequence:', err);
             prevChapterBtn.removeAttribute('href');
             nextChapterBtn.removeAttribute('href');
             prevChapterBtn.classList.add('opacity-30', 'pointer-events-none');
@@ -550,7 +623,7 @@ const { id } = Astro.params;
   // ─── TOOLBAR AUTO-HIDE ON SCROLL ───
   let lastScrollY = window.scrollY;
   window.addEventListener('scroll', () => {
-    if (isSingleMode) return; // Always keep visible in single page mode
+    if (readerMode === 'single') return; // Always keep visible in single page mode
     
     const currentScrollY = window.scrollY;
     if (Math.abs(currentScrollY - lastScrollY) < 12) return;
@@ -599,7 +672,7 @@ const { id } = Astro.params;
   });
 
   zoomFitBtn?.addEventListener('click', () => {
-    if (isSingleMode) {
+    if (readerMode === 'single') {
       if (zoomLevelIdx !== 2) {
         zoomLevelIdx = 2; // Reset to 1.0 (Fit Width)
         applyZoom();
@@ -625,7 +698,13 @@ const { id } = Astro.params;
 
   modeToggle?.addEventListener('click', (e) => {
     e.stopPropagation();
-    setMode(!isSingleMode);
+    if (readerMode === 'long') {
+      setMode('strip');
+    } else if (readerMode === 'strip') {
+      setMode('single');
+    } else {
+      setMode('long');
+    }
   });
 
   // ─── PDF COMPILATION ENGINE ───
@@ -780,12 +859,12 @@ const { id } = Astro.params;
       
       try {
         const link = document.createElement('a');
-        const activeIdx = isSingleMode ? currentPage : activePageIdx;
+        const activeIdx = readerMode === 'single' ? currentPage : activePageIdx;
         link.download = `${chapterId}-page-${activeIdx + 1}.png`;
         link.href = pages[activeIdx];
         link.click();
       } catch {
-        const activeIdx = isSingleMode ? currentPage : activePageIdx;
+        const activeIdx = readerMode === 'single' ? currentPage : activePageIdx;
         window.open(pages[activeIdx], '_blank');
       }
 
