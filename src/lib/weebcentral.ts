@@ -32,6 +32,10 @@ export interface ChapterPages {
   id: string;
   pages: string[];
   chapterTitle: string;
+  seriesId: string;
+  seriesTitle: string;
+  prevChapterId: string | null;
+  nextChapterId: string | null;
 }
 
 export interface HotUpdate {
@@ -58,16 +62,23 @@ export interface HomepageData {
   recommendations: SeriesResult[];
 }
 
-async function fetchHTML(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
-  return res.text();
+async function fetchHTML(url: string, timeoutMs = 15000): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
+    return res.text();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function extractSeriesId(href: string): string | null {
@@ -253,75 +264,74 @@ export async function searchSeries(query: string): Promise<SeriesResult[]> {
   return results;
 }
 
+function extractTag(html: string, tag: string, attr?: string): string {
+  const re = new RegExp(`<${tag}[^>]*?>([\\s\\S]*?)<\\/${tag}>`, 'i');
+  const m = re.exec(html);
+  if (!m) return '';
+  const inner = m[1].replace(/<[^>]+>/g, '').trim();
+  return inner;
+}
+
+function extractAttr(html: string, tag: string, attribute: string, filter?: string): string {
+  const re = new RegExp(`<${tag}[^>]*${filter ? filter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : ''}[^>]*?${attribute}=["']([^"']+)["']`, 'i');
+  const m = re.exec(html);
+  return m ? m[1] : '';
+}
+
 export async function getSeriesDetail(id: string): Promise<SeriesDetail> {
   const url = `${BASE}/series/${id}`;
   const html = await fetchHTML(url);
-  const $ = cheerio.load(html);
 
-  const title = $('h1').first().text().trim();
-  const description = $('p').first().text().trim();
-  const coverImg = $('img[src*="temp.compsci88.com"]').first().attr('src')
-    || $('img[src*="cover"]').first().attr('src')
-    || getCoverUrl(id);
+  const title = extractTag(html, 'h1');
+  const pMatch = html.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+  const description = pMatch ? pMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+
+  const coverMatch = html.match(/<img[^>]*src=["']([^"']*temp\.compsci88\.com[^"']*)["'][^>]*>/i)
+    || html.match(/<img[^>]*src=["']([^"']*cover[^"']*)["'][^>]*>/i);
+  const coverImg = coverMatch ? coverMatch[1] : getCoverUrl(id);
 
   const altTitles: string[] = [];
   const authors: string[] = [];
   const tags: string[] = [];
 
-  for (const el of $('li').toArray()) {
-    const strong = $(el).find('strong').text().trim();
-    if (strong.includes('Associated Name')) {
-      for (const li of $(el).find('ul li').toArray()) {
-        altTitles.push($(li).text().trim());
+  const associatedMatch = html.match(/<strong[^>]*>Associated Name[\s\S]*?<\/ul>/i);
+  if (associatedMatch) {
+    const ulMatch = associatedMatch[0].match(/<ul[^>]*>([\s\S]*)<\/ul>/i);
+    if (ulMatch) {
+      const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+      let lm;
+      while ((lm = liRegex.exec(ulMatch[1])) !== null) {
+        altTitles.push(lm[1].replace(/<[^>]+>/g, '').trim());
       }
     }
   }
 
-  for (const el of $('a[href*="author"]').toArray()) {
-    authors.push($(el).text().trim());
+  const authorRegex = /<a[^>]*href=["'][^"']*author[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let am;
+  while ((am = authorRegex.exec(html)) !== null) {
+    authors.push(am[1].replace(/<[^>]+>/g, '').trim());
   }
 
-  for (const el of $('a[href*="included_tag"]').toArray()) {
-    tags.push($(el).text().trim());
+  const tagRegex = /<a[^>]*href=["'][^"']*included_tag[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let tm;
+  while ((tm = tagRegex.exec(html)) !== null) {
+    tags.push(tm[1].replace(/<[^>]+>/g, '').trim());
   }
 
-  const type = $('a[href*="included_type"]').first().text().trim() || undefined;
-  const status = $('a[href*="included_status"]').first().text().trim() || undefined;
+  const typeMatch = html.match(/<a[^>]*href=["'][^"']*included_type[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
+  const type = typeMatch ? typeMatch[1].replace(/<[^>]+>/g, '').trim() : undefined;
 
+  const statusMatch = html.match(/<a[^>]*href=["'][^"']*included_status[^"']*["'][^>]*>([\s\S]*?)<\/a>/i);
+  const status = statusMatch ? statusMatch[1].replace(/<[^>]+>/g, '').trim() : undefined;
+
+  const releasedMatch = html.match(/Released[^<]*<\/strong>[^<]*<[^>]*>([\s\S]*?)<\//i);
   let year: string | undefined;
-  const releasedText = $('li:contains("Released")').text().trim();
-  const yearMatch = releasedText.match(/(\d{4})/);
-  if (yearMatch) year = yearMatch[1];
+  if (releasedMatch) {
+    const yearMatch = releasedMatch[1].match(/(\d{4})/);
+    if (yearMatch) year = yearMatch[1];
+  }
 
   const chapters: ChapterInfo[] = [];
-  try {
-    const chaptersHtml = await fetchHTML(`${BASE}/series/${id}/full-chapter-list`);
-    const $ch = cheerio.load(chaptersHtml);
-    const chapterLinks = $ch('a[href*="/chapters/"]');
-    chapterLinks.each((_, el) => {
-      const href = $ch(el).attr('href') || '';
-      const match = href.match(/\/chapters\/([^/]+)/);
-      if (!match) return;
-
-      const growSpan = $ch(el).find('span.grow').first();
-      let text = '';
-      if (growSpan.length) {
-        text = growSpan.children('span').first().text().trim();
-      }
-      if (!text) {
-        text = $ch(el).text().trim().split('Last Read')[0].trim();
-      }
-      const date = $ch(el).find('time').attr('datetime') || '';
-      chapters.push({
-        id: match[1],
-        chapter: text.replace(/^Chapter\s+/i, '').trim(),
-        title: text,
-        date,
-      });
-    });
-  } catch (err) {
-    console.error('Error fetching full chapter list:', err);
-  }
 
   return {
     id,
@@ -331,6 +341,45 @@ export async function getSeriesDetail(id: string): Promise<SeriesDetail> {
     altTitles, description, authors, tags,
     type, year, status, chapters,
   };
+}
+
+export async function getSeriesAllChapters(id: string): Promise<ChapterInfo[]> {
+  try {
+    const chaptersHtml = await fetchHTML(`${BASE}/series/${id}/full-chapter-list`, 60000);
+    const chapters: ChapterInfo[] = [];
+    const linkRegex = /<a[^>]*?href="https?:\/\/weebcentral\.com\/chapters\/([^"\/]+)"[^>]*?>([\s\S]*?)<\/a>/gi;
+    let m;
+    while ((m = linkRegex.exec(chaptersHtml)) !== null) {
+      const chId = m[1];
+      const linkContent = m[2];
+
+      const growMatch = linkContent.match(/<span[^>]*class="grow[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
+      let text = '';
+      if (growMatch) {
+        const innerSpan = growMatch[1].match(/<span[^>]*>([\s\S]*?)<\/span>/i);
+        text = innerSpan ? innerSpan[1].trim() : growMatch[1].replace(/<[^>]+>/g, '').trim();
+      }
+      if (!text) {
+        text = linkContent.replace(/<[^>]+>/g, '').trim().split('Last Read')[0].trim();
+      }
+
+      const dateMatch = linkContent.match(/datetime=["']([^"']+)["']/i);
+      const date = dateMatch ? dateMatch[1] : '';
+
+      if (chId) {
+        chapters.push({
+          id: chId,
+          chapter: text.replace(/^Chapter\s+/i, '').trim(),
+          title: text,
+          date,
+        });
+      }
+    }
+    return chapters;
+  } catch (err) {
+    console.error('Error fetching all chapters:', err);
+    return [];
+  }
 }
 
 export async function getChapterPages(chapterId: string): Promise<ChapterPages> {
@@ -393,17 +442,38 @@ export async function getChapterPages(chapterId: string): Promise<ChapterPages> 
 
   let chapterTitle = `Chapter ${chapterId}`;
   const docTitle = $('title').first().text().trim();
+  let seriesTitle = '';
   if (docTitle && docTitle.includes('|')) {
     const parts = docTitle.split('|');
     const chName = parts[0].trim();
-    const seriesName = parts[1]?.trim();
-    if (chName && seriesName) {
-      chapterTitle = `${seriesName} - ${chName}`;
+    const sName = parts[1]?.trim();
+    if (chName && sName) {
+      chapterTitle = `${sName} - ${chName}`;
+      seriesTitle = sName;
     } else if (chName) {
       chapterTitle = chName;
     }
   }
-  return { id: chapterId, pages: images, chapterTitle };
+
+  let seriesId = '';
+  let prevChapterId: string | null = null;
+  let nextChapterId: string | null = null;
+
+  $('a[href*="/series/"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const m = href.match(/\/series\/([^/]+)\/([^/]+)/);
+    if (m && m[1] !== 'random') { seriesId = m[1]; return false; }
+  });
+
+  return {
+    id: chapterId,
+    pages: images,
+    chapterTitle,
+    seriesId,
+    seriesTitle,
+    prevChapterId,
+    nextChapterId,
+  };
 }
 
 export function getCoverUrl(id: string): string {

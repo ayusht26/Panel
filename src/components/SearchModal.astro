@@ -116,7 +116,7 @@
   });
 
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) closeSearch();
+    if (!e.target.closest('.max-w-lg')) closeSearch();
   });
 
   input?.addEventListener('input', () => {

@@ -1,0 +1,11 @@
+=== Deploy Commands ===
+
+1. Build the project:
+   npm run build
+
+2. Deploy to Cloudflare:
+   cd dist/server
+   wrangler deploy
+
+Or in one line (from project root):
+   npm run build && cd dist/server && wrangler deploy

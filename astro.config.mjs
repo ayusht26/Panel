@@ -1,11 +1,11 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import tailwind from '@tailwindcss/vite';
-import vercel from '@astrojs/vercel';
+import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
   output: 'server',
-  adapter: vercel(),
+  adapter: cloudflare({ mode: 'directory' }),
   vite: {
     plugins: [tailwind()],
     server: {
