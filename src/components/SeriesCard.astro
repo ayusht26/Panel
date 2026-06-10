@@ -1,0 +1,54 @@
+---
+export interface Props {
+  id: string;
+  title: string;
+  image: string;
+  year?: string;
+  type?: string;
+  status?: string;
+  tags?: string[];
+}
+
+const { id, title, image, year, type, status, tags = [] } = Astro.props;
+const displayTags = tags.slice(0, 3);
+---
+
+<a
+  href={`/series/${id}`}
+  class="group relative flex flex-col overflow-hidden rounded-xl border border-hairline bg-canvas shadow-vercel-sm card-hover transition-all duration-200 hover:shadow-vercel-md"
+>
+  <div class="relative aspect-[3/4] overflow-hidden bg-canvas-soft-2">
+    <img
+      src={image}
+      alt={title}
+      class="h-full w-full object-cover transition-all duration-500 group-hover:scale-105"
+      loading="lazy"
+    />
+    <div class="absolute inset-0 bg-gradient-to-t from-ink/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+    {status && (
+      <span class="absolute left-2 top-2 rounded-full border border-white/20 bg-ink/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+        {status}
+      </span>
+    )}
+  </div>
+
+  <div class="flex flex-1 flex-col gap-1.5 p-3.5">
+    <h3 class="text-sm font-semibold leading-tight tracking-tight text-ink line-clamp-2">
+      {title}
+    </h3>
+    <div class="mt-auto flex items-center gap-2">
+      {year && <span class="text-[11px] text-mute font-mono">{year}</span>}
+      {type && <span class="text-[11px] text-mute">{type}</span>}
+    </div>
+    {displayTags.length > 0 && (
+      <div class="flex flex-wrap gap-1.5">
+        {displayTags.map(tag => (
+          <span class="rounded-full bg-canvas-soft border border-hairline px-2 py-0.5 text-[10px] text-body">
+            {tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+</a>

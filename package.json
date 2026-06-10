@@ -1,5 +1,5 @@
 {
-  "name": "manga-color",
+  "name": "panel-reader",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -14,9 +14,7 @@
   "dependencies": {
     "@astrojs/node": "^10.1.4",
     "astro": "^6.4.5",
-    "canvas": "^3.2.3",
-    "pdfjs-dist": "^6.0.227",
-    "sharp": "^0.34.5"
+    "cheerio": "^1.0.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.9",

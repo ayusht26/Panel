@@ -6,14 +6,17 @@ interface Props {
   description?: string;
 }
 
-const { title = "StrawHat Studio — One Piece Colorization & Archive", description = "Browse, download, and colorize One Piece manga chapters. Free access to the complete Digital Colored Comics archive." } = Astro.props;
+const {
+  title = 'Panel — Read Manga, Beautifully',
+  description = 'A clean, modern manga reader powered by WeebCentral.',
+} = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
@@ -23,27 +26,18 @@ const { title = "StrawHat Studio — One Piece Colorization & Archive", descript
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <script is:inline>
-      const theme = (() => {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-          return localStorage.getItem('theme');
-        }
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          return 'dark';
-        }
-        return 'light';
+      (function() {
+        var theme = localStorage.getItem('theme');
+        if (!theme) theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if (theme === 'dark') document.documentElement.classList.add('dark');
       })();
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
     </script>
   </head>
-  <body class="bg-canvas-soft text-ink antialiased">
+  <body class="min-h-screen bg-canvas-soft text-ink antialiased theme-transition flex flex-col">
     <slot />
   </body>
 </html>

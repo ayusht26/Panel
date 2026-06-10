@@ -1,37 +1,40 @@
 import type { APIRoute } from 'astro';
 
-export const prerender = false;
-
 export const GET: APIRoute = async ({ request }) => {
-  const urlObj = new URL(request.url);
-  const targetUrl = urlObj.searchParams.get('url');
-  if (!targetUrl) {
-    return new Response('Missing url parameter', { status: 400 });
+  const urlParam = new URL(request.url).searchParams.get('url');
+  if (!urlParam) {
+    return new Response(JSON.stringify({ error: 'Missing url parameter' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    const res = await fetch(targetUrl, {
+    const res = await fetch(urlParam, {
       headers: {
-        'Referer': 'https://ww12.readonepiece.com/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
     });
-
-    if (!res.ok) {
-      return new Response(`Failed to fetch image: ${res.statusText}`, { status: res.status });
-    }
-
-    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching remote image`);
+    
+    const contentType = res.headers.get('content-type') || 'image/png';
     const buffer = await res.arrayBuffer();
 
     return new Response(buffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=86400'
-      }
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'public, max-age=31536000',
+      },
     });
-  } catch (error: any) {
-    return new Response(error.message, { status: 500 });
+  } catch (e) {
+    console.error('Proxy image error:', e);
+    return new Response(JSON.stringify({ error: 'Failed to fetch image' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };
