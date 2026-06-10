@@ -3,9 +3,9 @@
 1. Build the project:
    npm run build
 
-2. Deploy to Cloudflare:
-   cd dist/server
-   wrangler deploy
+2. Deploy to Cloudflare (from project root):
+   npx wrangler deploy --config dist/server/wrangler.json
 
 Or in one line (from project root):
-   npm run build && cd dist/server && wrangler deploy
+   npm run build && npx wrangler deploy --config dist/server/wrangler.json
+
