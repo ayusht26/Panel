@@ -1,77 +1,102 @@
-# Panel — Read Manga, Beautifully
+# PANEL.
+## A Brutally Clean Manga Reader Powered by WeebCentral.
 
-> A clean, modern manga reader built with Astro + Tailwind CSS v4. Browse thousands of manga, manhwa, and manhua — no account needed.
-
-![Panel](https://img.shields.io/badge/Astro-6.x-FF5D01?style=flat-square&logo=astro&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-≥22.12-339933?style=flat-square&logo=nodedotjs&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
-
----
-
-## Features
-
-- **Zero account required** — open any manga and start reading immediately
-- **Continuous scroll & single-page modes** — switch mid-chapter, preference is saved
-- **Zoom controls** — six zoom levels plus fit-to-height in single-page mode
-- **Dark / light theme** — animated circle-ripple transition between modes
-- **PDF export** — compile an entire chapter to a PDF with progress feedback
-- **Instant search** — debounced search modal (⌘K / Ctrl+K) from any page
-- **Cover lightbox** — FLIP-animated full-cover preview on series pages
-- **Chapter filtering & sorting** — search within a series' chapter list, sort newest/oldest
-- **Responsive** — works on mobile, tablet, and desktop
-- **Server-side rendering** — all API routes run server-side via `@astrojs/node`
+![Astro](https://img.shields.io/badge/Astro-6.x-131313?style=flat-square&logo=astro&logoColor=3cffd0)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-131313?style=flat-square&logo=tailwindcss&logoColor=3cffd0)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-Pages-131313?style=flat-square&logo=cloudflare&logoColor=3cffd0)
+![Node.js](https://img.shields.io/badge/Node.js-≥22.12-131313?style=flat-square&logo=nodedotjs&logoColor=3cffd0)
+![License](https://img.shields.io/badge/License-MIT-131313?style=flat-square&logoColor=3cffd0)
 
 ---
 
-## Screenshots
+`[EDITORIAL INTRO]`
 
-| Home | Series | Reader |
-|------|--------|--------|
-| Hot updates, latest releases, trending series | Cover art, tags, chapter list with search/sort | Long-strip & single-page with zoom + PDF export |
+Panel is an editorial-grade, zero-telemetry manga reader designed to feel less like a standard e-reader and more like a developer console meets tech tabloid. With a dark canvas (`#131313`), acid-mint (`#3cffd0`) and ultraviolet (`#5200ff`) hazard accents, and rounded pill-card styling, Panel delivers a high-speed, zero-ad layout designed around WeebCentral's public library.
 
 ---
 
-## Tech Stack
+`[SECTION 01 / STORYSTREAM]`
+# THE TIMELINE FEED.
 
-| Layer | Technology |
-|---|---|
-| Framework | [Astro 6](https://astro.build) (SSR, `@astrojs/node` adapter) |
-| Styling | [Tailwind CSS v4](https://tailwindcss.com) (via `@tailwindcss/vite`) |
-| Scraping | [Cheerio](https://cheerio.js.org) |
-| Data source | [WeebCentral](https://weebcentral.com) |
-| PDF export | [jsPDF](https://github.com/parallax/jsPDF) (loaded on demand) |
-| Runtime | Node.js ≥ 22.12 |
+The interface is structured as a continuous timeline feed where every feature acts as an editorial block, framed by hairline borders and marked by monospaced rail guides.
+
+┃
+┣━ `[09:00 AM]` ━ **ZERO ACCOUNTS OR ADS**
+┃  Read immediately without login walls, telemetry, or tracking. Zero distractions.
+┃
+┣━ `[10:15 AM]` ━ **DYNAMIC DUAL READING FLOW**
+┃  Switch layout mid-chapter between continuous vertical scroll (long-strip) and page-by-page.
+┃
+┣━ `[11:30 AM]` ━ **ON-DEMAND PDF EXPORT**
+┃  Compile chapters into high-fidelity PDFs. Images are fetched server-side via CORS proxy and compiled dynamically in the browser.
+┃
+┣━ `[01:00 PM]` ━ **THEME RIPPLES**
+┃  Stark dark canvas (`#131313`) by default, with a smooth, circle-ripple transition into light mode.
+┃
+┣━ `[02:45 PM]` ━ **GLOBAL COMMAND DIALOG**
+┃  Invoke a debounced global search modal from anywhere on the site with `⌘K` or `Ctrl+K`.
+┃
+┣━ `[04:00 PM]` ━ **FLIP LIGHTBOX IMAGERY**
+┃  Smooth, FLIP-animated full-cover lightboxes on series detail pages.
+┃
+┣━ `[05:15 PM]` ━ **REAL-TIME FILTERING & SORTING**
+┃  Filter and sort chapters instantly using debounced client-side matching.
+┃
+┣━ `[06:30 PM]` ━ **STAGGERED HERO CAROUSEL**
+┃  Dynamic staggered recommendation stack on the homepage that cycles automatically.
+┃
 
 ---
 
-## Project Structure
+`[SECTION 02 / TECH STACK]`
+# THE CORE STACK.
+
+A high-performance technical layer built to execute at the edge.
+
+| Component | Technical Selection | Role |
+|---|---|---|
+| **Framework** | [Astro 6](https://astro.build) | Serverless SSR via `@astrojs/cloudflare` |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com) | Compile-time Vite integration |
+| **Data Sourcing**| [Cheerio](https://cheerio.js.org) | High-speed server-side HTML scraping |
+| **PDF Compiler** | [jsPDF](https://github.com/parallax/jsPDF) | On-demand dynamic client bundling |
+| **Typography** | [Inter](https://fonts.google.com/specimen/Inter) | Core UI Sans |
+| **Code Typography**| [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) | Technical metadata & timelines |
+
+---
+
+`[SECTION 03 / DIRECTORY]`
+# REPO SCHEMA MAP.
 
 ```
-panel/
+.
 ├── src/
 │   ├── components/
-│   │   ├── Nav.astro          # Sticky nav with theme toggle + search trigger
-│   │   ├── SearchModal.astro  # ⌘K modal with keyboard navigation
-│   │   ├── SeriesCard.astro   # Reusable manga card
-│   │   └── Footer.astro
+│   │   ├── Footer.astro       # Minimal navigation footer
+│   │   ├── Nav.astro          # Navigation header with search trigger & theme toggle
+│   │   ├── SearchModal.astro  # Keyboard-accessible debounced client search
+│   │   └── SeriesCard.astro   # Card component with FLIP-compatible imagery
 │   ├── layouts/
-│   │   └── Layout.astro       # Base HTML, fonts, theme init script
+│   │   └── Layout.astro       # Base layout, typography preloads, and inline theme script
 │   ├── lib/
-│   │   └── weebcentral.ts     # All scraping logic (search, series, chapters)
+│   │   └── weebcentral.ts     # HTML parsing and scraping core utilities
 │   ├── pages/
-│   │   ├── index.astro        # Homepage (hero, hot updates, latest, hot series)
-│   │   ├── search.astro       # Browse / search page
-│   │   ├── series/[id].astro  # Series detail + chapter list
-│   │   ├── read/[id].astro    # Chapter reader
-│   │   └── api/
-│   │       ├── home.ts
-│   │       ├── search.ts
-│   │       ├── proxy-image.ts
-│   │       ├── series/[id].ts
-│   │       └── chapter/[id].ts
+│   │   ├── api/
+│   │   │   ├── chapter/
+│   │   │   │   └── [id].ts    # SSR endpoint fetching chapter page images
+│   │   │   ├── series/
+│   │   │   │   └── [id].ts    # SSR endpoint fetching series information
+│   │   │   ├── home.ts        # Homepage dynamic aggregation endpoint
+│   │   │   ├── proxy-image.ts # CORS bypass proxy for images and PDF exports
+│   │   │   └── search.ts      # Dedicated route for debounced client searches
+│   │   ├── read/
+│   │   │   └── [id].astro     # Infinite-scroll and single-page chapter reader
+│   │   ├── series/
+│   │   │   └── [id].astro     # Series details page and chapter list
+│   │   ├── index.astro        # Homepage (staggered carousel, trending, latest updates)
+│   │   ├── popular.astro      # Trending page with custom sort filters
+│   │   └── search.astro       # Browsing and search interface
 │   └── styles/
-│       └── global.css         # Design tokens, animations, skeleton loaders
+│       └── global.css         # Verge hazard tokens, ripple animations, and layout transitions
 ├── public/
 │   ├── favicon.svg
 │   └── favicon.ico
@@ -82,120 +107,81 @@ panel/
 
 ---
 
-## Getting Started
+`[SECTION 04 / INSTALLATION]`
+# INITIALIZATION sequence.
 
-### Prerequisites
+### Prerequisites.
 
-- Node.js **≥ 22.12.0**
-- npm
+*   Node.js **≥ 22.12.0**
+*   npm
 
-### Installation
+### Command flow.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/panel.git
-cd panel
+$ git clone https://github.com/your-username/panel.git
+$ cd panel
 
-# Install dependencies
-npm install
+# Install package dependencies
+$ npm install
 
-# Start the development server
-npm run dev
+# Boot development environment
+$ npm run dev
 ```
 
 Open [http://localhost:4321](http://localhost:4321) in your browser.
 
-### Available Scripts
+### Script registry.
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start local dev server at `localhost:4321` |
-| `npm run build` | Build for production (outputs to `dist/`) |
-| `npm run preview` | Preview the production build locally |
+*   `npm run dev` ━━━━━ Starts the local dev server.
+*   `npm run build` ━━━ Compiles the serverless output.
+*   `npm run preview` ━ Previews the production build locally using Wrangler.
 
 ---
 
-## Deployment
+`[SECTION 05 / DEPLOYMENT]`
+# EDGE DEPLOYMENT.
 
-Panel is an SSR application — it requires a **Node.js server** to run. It cannot be deployed as a static site.
+Panel runs server-side rendered (SSR) on **Cloudflare Pages**. 
 
-### Option A — Render (Recommended for beginners)
-
-1. Push your code to GitHub
-2. Go to [render.com](https://render.com) → **New → Web Service**
-3. Connect your repository
-4. Set the following:
-   - **Runtime:** Node
-   - **Build command:** `npm install && npm run build`
-   - **Start command:** `node dist/server/entry.mjs`
-   - **Node version:** 22 (set in environment variables: `NODE_VERSION = 22`)
-5. Click **Deploy**
-
-### Option B — Vercel (with adapter note)
-
-Vercel does not support the `@astrojs/node` adapter out of the box. To deploy on Vercel you need to swap the adapter:
-
+To compile and deploy to the serverless edge in a single pipeline command:
 ```bash
-npm install @astrojs/vercel
-```
-
-Then update `astro.config.mjs`:
-
-```js
-import vercel from '@astrojs/vercel/serverless';
-
-export default defineConfig({
-  output: 'server',
-  adapter: vercel(),
-  // ...
-});
-```
-
-Then deploy via the Vercel CLI or GitHub integration normally.
-
-> See the full step-by-step guide in [DEPLOY.md](./DEPLOY.md).
-
----
-
-## Configuration
-
-No `.env` file is required for basic usage — Panel scrapes WeebCentral directly without an API key.
-
-If you want to configure a custom port for the Node server:
-
-```bash
-PORT=3000 node dist/server/entry.mjs
+$ npm run build && npx wrangler deploy --config dist/server/wrangler.json
 ```
 
 ---
 
-## How It Works
+`[SECTION 06 / KEYBOARD SHORTCUTS]`
+# CONSOLE HOTKEYS.
 
-1. **Search** — Posts to WeebCentral's `/search/simple` endpoint and parses HTML results with Cheerio
-2. **Series detail** — Fetches and parses the series page + full chapter list endpoint
-3. **Chapter reader** — Parses the first page preload URL + max page count to reconstruct all image URLs
-4. **Image proxy** — `/api/proxy-image` relays manga page images to bypass CORS restrictions (also used for PDF export)
-5. **PDF export** — Loads jsPDF on demand, fetches all pages through the proxy, draws each onto a canvas, and compiles a multi-page PDF
-
----
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
+| Key combination | Command |
 |---|---|
-| `⌘K` / `Ctrl+K` | Open search modal |
-| `→` / `Space` | Next page (reader) |
-| `←` | Previous page (reader) |
-| `Esc` | Close modal / lightbox |
+| `⌘K` / `Ctrl+K` | Toggle search modal |
+| `→` / `Space` | Go to next page (single-page reader mode) |
+| `←` | Go to previous page (single-page reader mode) |
+| `Esc` | Terminate modal / image lightbox overlay |
 
 ---
 
-## Disclaimer
+`[SECTION 07 / PALETTE]`
+# COLOR ROLES.
 
-Panel is an unofficial, open-source project. It is not affiliated with, endorsed by, or connected to WeebCentral or any manga publisher. All manga content is the property of its respective creators and publishers. This project is intended for personal, educational use only.
+*   **CANVAS BLACK** ━━ `#131313` (Main editorial background)
+*   **JELLY MINT** ━━━━ `#3CFFD0` (Safety-neon action accent)
+*   **VERGE ULTRAVIOLET** `#5200FF` (Secondary cathode highlight)
+*   **SURFACE SLATE** ━━ `#2D2D2D` (Secondary card background)
+*   **HAZARD WHITE** ━━━ `#FFFFFF` (Spotlight headers and body text)
 
 ---
 
-## License
+`[SECTION 08 / LEGALITY]`
+# DISCLAIMER.
+
+Panel is an unofficial, open-source project. It is not affiliated with, endorsed by, or connected to WeebCentral or any manga publisher. All manga content is the property of its respective creators and publishers. This project is intended for personal, educational, and non-commercial use only.
+
+---
+
+`[SECTION 09 / LICENSE]`
+# LICENSE.
 
 MIT — see [LICENSE](./LICENSE) for details.
